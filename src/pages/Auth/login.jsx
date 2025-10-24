@@ -136,7 +136,7 @@ const login = () => {
                 <input
                   type="checkbox"
                   name="remember"
-                  checked={form.remember}
+                  checked={form.rememberMe}
                   onChange={handleChange}
                   className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-400"
                 />
