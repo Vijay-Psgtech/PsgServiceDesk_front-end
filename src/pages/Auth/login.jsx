@@ -3,6 +3,7 @@ import { HelpCircle, Eye, EyeOff } from "lucide-react";
 import api from "../../api/axios";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import axiosInstance from "../../utils/axiosInstance";
 
 const login = () => {
   const navigate = useNavigate();
@@ -27,14 +28,15 @@ const login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await api.post("/auth/login", {
-        email: form.email,
-        password: form.password,
-        rememberMe: form.rememberMe,
-      });
-      const { accessToken, user } = res.data;
-      login(accessToken, user);
-      navigate("/dashboard");
+      const res = await axiosInstance.post("/auth/login", form);
+      console.log('response', res);
+      if(res.data.accessToken) {
+        const { accessToken, user } = res.data;
+        login(accessToken, user);
+        navigate("/dashboard");
+      } else {
+        setError("Invalid login credentials");
+      }
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");
     }
@@ -53,7 +55,7 @@ const login = () => {
 
         {/* Content */}
         <div className="relative z-10 text-center max-w-md">
-          <div classname="flex justify-center mb-6">
+          <div className="flex justify-center mb-6">
             <img
               src="https://upload.wikimedia.org/wikipedia/commons/a/ab/Logo_TV_2015.png"
               alt="Company Logo"
