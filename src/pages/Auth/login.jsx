@@ -9,7 +9,7 @@ const login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [form, setForm] = useState({
-    email: "",
+    userName: "",
     password: "",
     rememberMe: false,
   });
@@ -29,8 +29,8 @@ const login = () => {
     e.preventDefault();
     try {
       const res = await axiosInstance.post("/auth/login", form);
-      console.log('response', res);
-      if(res.data.accessToken) {
+      console.log("response", res);
+      if (res.data.accessToken) {
         const { accessToken, user } = res.data;
         login(accessToken, user);
         navigate("/dashboard");
@@ -83,22 +83,22 @@ const login = () => {
             </div>
           )}
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Email */}
+            {/* UserName */}
             <div>
               <label
-                htmlFor="email"
+                htmlFor="userName"
                 className="block text-sm font-medium text-gray-600 mb-1"
               >
-                Email Address
+                UserName
               </label>
               <input
-                type="email"
-                name="email"
-                id="email"
-                value={form.email}
+                type="text"
+                name="userName"
+                id="userName"
+                value={form.userName}
                 onChange={handleChange}
                 required
-                placeholder="Enter your email"
+                placeholder="Enter your username"
                 className="w-full p-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition"
               />
             </div>
