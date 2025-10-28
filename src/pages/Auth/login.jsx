@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { HelpCircle, Eye, EyeOff } from "lucide-react";
 import api from "../../api/axios";
 import { useAuth } from "../../context/AuthContext";
@@ -16,12 +16,20 @@ const login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(null);
 
+  //Prefill saved userName on component mount
+  useEffect(() => {
+    const savedUserName = localStorage.getItem("rememberedUsername");
+    if(savedUserName) {
+      setForm((prev) => ({...prev, userName: savedUserName, rememberMe: true }));
+    }
+  },[]);
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === "checked" ? checked : value,
-    }));
+    setForm({
+      ...form,
+      [name]: type === 'checkbox' ? checked : value,
+    });
     setError(null);
   };
 
@@ -29,10 +37,17 @@ const login = () => {
     e.preventDefault();
     try {
       const res = await axiosInstance.post("/auth/login", form);
-      console.log("response", res);
       if (res.data.accessToken) {
         const { accessToken, user } = res.data;
         login(accessToken, user);
+
+        // Remember userName only if checked
+        if(form.rememberMe){
+          localStorage.setItem("rememberedUsername", form.userName);
+        } else {
+          localStorage.removeItem("rememberedUsername");
+        }
+
         navigate("/dashboard");
       } else {
         setError("Invalid login credentials");
@@ -135,7 +150,7 @@ const login = () => {
               <label className="flex items-center space-x-2">
                 <input
                   type="checkbox"
-                  name="remember"
+                  name="rememberMe"
                   checked={form.rememberMe}
                   onChange={handleChange}
                   className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-400"
