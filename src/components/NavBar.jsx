@@ -5,7 +5,7 @@ import { useDepartment } from "../context/DepartmentContext";
 import { Menu } from "lucide-react";
 
 export default function NavBar() {
-  const [selectedDepartment, setSelectedDepartment] = useDepartment();
+  const { selectedDepartment, setSelectedDepartment } = useDepartment();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const departments = [
