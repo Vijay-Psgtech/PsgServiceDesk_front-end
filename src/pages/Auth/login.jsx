@@ -36,7 +36,7 @@ const login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axiosInstance.post("/auth/login", form);
+      const res = await api.post("/auth/login", form);
       if (res.data.accessToken) {
         const { accessToken, user } = res.data;
         login(accessToken, user);
@@ -47,8 +47,11 @@ const login = () => {
         } else {
           localStorage.removeItem("rememberedUsername");
         }
-
-        navigate("/dashboard");
+        if(user.role === 'user'){
+          navigate("/user-dashboard")
+        }else{
+          navigate("/dashboard");
+        }
       } else {
         setError("Invalid login credentials");
       }

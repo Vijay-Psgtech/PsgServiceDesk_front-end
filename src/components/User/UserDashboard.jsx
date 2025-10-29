@@ -12,11 +12,15 @@ import {
 import { Calendar } from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import dayjs from "dayjs";
+import { useAuth } from "../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 export default function UserDashboard() {
+  const { auth, logout } = useAuth();
+  const navigate = useNavigate();
   const user = {
-    name: "John Doe",
-    regId: "USR-1001",
+    name: auth?.user?.userName || "User",
+    regId: auth?.user?.id || "USR-1001",
   };
 
   const [tickets, setTickets] = useState([
@@ -128,6 +132,9 @@ export default function UserDashboard() {
         </div>
         <button
           className={`flex items-center gap-2 text-sm px-4 py-2 rounded-md border border-purple-500/40 text-purple-300 hover:bg-purple-800/30 transition-all`}
+          onClick={() => {
+            navigate("/"), logout();
+          }}
         >
           <LogOut size={16} />
           Logout

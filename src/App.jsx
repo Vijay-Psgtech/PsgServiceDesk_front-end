@@ -15,9 +15,9 @@ function App() {
           <Route path="/dashboard" element={
             <DepartmentProvider>
               <NavBar />
-              <UserDashboard />
             </DepartmentProvider>
           }/>
+          <Route path="/user-dashboard" element={<UserDashboard />} />
         </Routes>
     </BrowserRouter>
   )
