@@ -1,6 +1,7 @@
+"use client";
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Pen, Pencil, Plus, Save } from "lucide-react";
+import { Pencil, Plus, Save } from "lucide-react";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -14,7 +15,7 @@ function Modal({ open, onClose, children }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.6 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 z-40"
+            className="fixed inset-0 bg-black/90 z-40"
             onClick={onClose}
           />
           <motion.div
@@ -22,7 +23,9 @@ function Modal({ open, onClose, children }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 50 }}
             transition={{ duration: 0.3 }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#0a0f1f] p-8 rounded-3xl border border-cyan-500/40 shadow-[0_0_25px_#00ffff50] z-50 w-full max-w-md"
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 
+                       bg-[#0a0f1f] p-8 rounded-3xl border border-cyan-500/40 
+                       shadow-[0_0_25px_#00ffff50] z-50 w-full max-w-md"
           >
             {children}
           </motion.div>
@@ -65,7 +68,7 @@ export default function Attributes() {
   const handleAddValue = (attrName) => {
     setSelectedAttr(attrName);
     setNewValue("");
-    setIsModalOpen(false);
+    setIsModalOpen(true);
   };
 
   const handleSaveValue = () => {
@@ -82,23 +85,25 @@ export default function Attributes() {
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-[#0a0f1f] overflow-hidden">
-      {/* animated neaon background image */}
+      {/* animated neon background image */}
       <motion.img
-        initial={{ y: 0 }}
-        animate={{ y: [0, -10, 0] }}
-        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
         src="src/assets/images/customer.jpg"
         alt="attributes visual"
         className="absolute w-[480px] opacity-25 bottom-10 left-16 rounded-3xl"
+        initial={{ y: 0 }}
+        animate={{ y: [0, -10, 0] }}
+        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
       />
 
       <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-3 gap-12 relative z-10 px-6 py-12">
-        {/* Left intro block */}
+        {/* left intro block */}
         <motion.div
           initial={{ opacity: 0, x: -30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6 }}
-          className="flex flex-col justify-center items-center bg-[#111827]/80 border border-cyan-500/30 backdrop-blur-2xl rounded-3xl p-10 shadow-[0_0_30px_#00ffff30]"
+          className="flex flex-col justify-center items-center bg-[#111827]/80 
+                     border border-cyan-500/30 backdrop-blur-2xl rounded-3xl 
+                     p-10 shadow-[0_0_30px_#00ffff30]"
         >
           <p className="text-cyan-400 text-lg font-semibold text-center">
             Define and manage your system attributes easily
@@ -118,7 +123,7 @@ export default function Attributes() {
 
           <Card
             className="border border-cyan-500/20 bg-[#111827]/80 
-                        backdrop-blur-2xl rounded-3xl shadow-[0_0_25px_#00ffff30]"
+                           backdrop-blur-2xl rounded-3xl shadow-[0_0_25px_#00ffff30]"
           >
             <CardContent className="space-y-8 py-10 px-8">
               {attributes.map((attr, index) => (
@@ -137,16 +142,16 @@ export default function Attributes() {
                   </label>
                   <div
                     className="flex flex-wrap gap-2 items-center bg-[#0f172a] 
-                                                    rounded-2xl p-4 border border-cyan-500/10 
-                                                    hover:border-cyan-400/30 transition"
+                               rounded-2xl p-4 border border-cyan-500/10 
+                               hover:border-cyan-400/30 transition"
                   >
                     {attr.values.map((value, i) => (
                       <motion.span
                         key={i}
                         whileHover={{ scale: 1.08 }}
                         className="bg-gradient-to-r from-cyan-700 to-purple-700 
-                                                        text-cyan-100 px-3 py-1 rounded-full text-sm 
-                                                        font-medium shadow-[0_0_10px_#00ffff40]"
+                                   text-cyan-100 px-3 py-1 rounded-full text-sm 
+                                   font-medium shadow-[0_0_10px_#00ffff40]"
                       >
                         {value}
                       </motion.span>
@@ -156,21 +161,22 @@ export default function Attributes() {
                       variant="ghost"
                       onClick={() => handleAddValue(attr.name)}
                       className="ml-auto text-cyan-400 hover:text-cyan-200 
-                                                            hover:bg-cyan-950/30 transition rounded-full"
+                                 hover:bg-cyan-950/30 transition rounded-full"
                     >
                       <Plus className="h-5 w-5" />
                     </Button>
                   </div>
                 </motion.div>
               ))}
+
               <div className="pt-6 border-t border-cyan-500/20 flex justify-end">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   className="flex items-center gap-2 bg-gradient-to-r 
-                                                from-cyan-600 via-purple-600 to-pink-600 
-                                                text-white px-6 py-2.5 rounded-2xl font-semibold 
-                                                shadow-[0_0_15px_#00ffff70]"
+                             from-cyan-600 via-purple-600 to-pink-600 
+                             text-white px-6 py-2.5 rounded-2xl font-semibold 
+                             shadow-[0_0_15px_#00ffff70]"
                 >
                   <Save className="h-4 w-4" /> Save Changes
                 </motion.button>
@@ -180,7 +186,7 @@ export default function Attributes() {
         </div>
       </div>
 
-      {/* Modal */}
+      {/* modal */}
       <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)}>
         <h3 className="text-lg font-semibold text-cyan-200 mb-4">
           Add New {selectedAttr}
