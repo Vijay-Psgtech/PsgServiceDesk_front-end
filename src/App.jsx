@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./pages/Auth/login";
 import NavBar from "./components/Navbar";
 import UserDashboard from "./components/User/UserDashboard";
+import Attributes from "./components/Attributes";
 import { DepartmentProvider } from "./context/DepartmentContext";
 
 
@@ -12,12 +13,13 @@ function App() {
     <BrowserRouter>
         <Routes>
           <Route path="" element={<Login />} />
-          <Route path="/dashboard" element={
+          <Route path="/attributes" element={
             <DepartmentProvider>
               <NavBar />
-              <UserDashboard />
+              <Attributes />
             </DepartmentProvider>
           }/>
+          <Route path="/user-dashboard" element={<UserDashboard />} />
         </Routes>
     </BrowserRouter>
   )
