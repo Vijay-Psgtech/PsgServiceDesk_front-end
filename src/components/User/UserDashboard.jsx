@@ -19,8 +19,8 @@ export default function UserDashboard() {
   const { auth, logout } = useAuth();
   const navigate = useNavigate();
   const user = {
-    name: auth?.user?.userName || "User",
-    regId: auth?.user?.id || "USR-1001",
+    name: auth?.user?.name || "User",
+    regId: auth?.user?.userId || "USR-1001",
   };
 
   const [tickets, setTickets] = useState([

@@ -4,8 +4,6 @@ import Login from "./pages/Auth/login";
 import NavBar from "./components/Navbar";
 import UserDashboard from "./components/User/UserDashboard";
 import Attributes from "./components/Attributes";
-import { DepartmentProvider } from "./context/DepartmentContext";
-
 
 function App() {
 
@@ -14,10 +12,7 @@ function App() {
         <Routes>
           <Route path="" element={<Login />} />
           <Route path="/attributes" element={
-            <DepartmentProvider>
               <NavBar />
-              <Attributes />
-            </DepartmentProvider>
           }/>
           <Route path="/user-dashboard" element={<UserDashboard />} />
         </Routes>
