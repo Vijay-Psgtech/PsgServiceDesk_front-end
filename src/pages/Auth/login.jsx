@@ -67,13 +67,13 @@ const login = () => {
         <img
           src="/service-desk.png"
           alt="Logo"
-          className="absolute inset-0 w-full h-full object-cover opacity-20"
+          className="absolute inset-0 w-full h-full object-cover opacity-5"
         />
 
         {/* Content */}
         <div className="relative z-10 text-center max-w-md"> 
-          <h1 className="text-4xl font-bold mb-4">Service Desk Portal</h1>
-          <p className="text-white/80 font-semibold text-lg leading-relaxed">
+          <h1 className="text-5xl font-bold mb-4">Service Desk Portal</h1>
+          <p className="text-white/80 font-semibold text-xl leading-relaxed">
             Manage your IT tickets efficiently, track issues, and provide
             seamless support — all from one dashboard.
           </p>
