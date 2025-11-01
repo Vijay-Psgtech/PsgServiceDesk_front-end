@@ -3,7 +3,6 @@ import { HelpCircle, Eye, EyeOff } from "lucide-react";
 import api from "../../api/axios";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import axiosInstance from "../../utils/axiosInstance";
 
 const login = () => {
   const navigate = useNavigate();
@@ -66,22 +65,15 @@ const login = () => {
       <div className="hidden lg:flex w-1/2 relative bg-gradient-to-br from-indigo-600 to-purple-600 text-white flex-col justify-center items-center p-10 overflow-hidden">
         {/* Background Illustration */}
         <img
-          src="/vite.svg"
+          src="/service-desk.png"
           alt="Logo"
           className="absolute inset-0 w-full h-full object-cover opacity-20"
         />
 
         {/* Content */}
-        <div className="relative z-10 text-center max-w-md">
-          <div className="flex justify-center mb-6">
-            <img
-              src="https://upload.wikimedia.org/wikipedia/commons/a/ab/Logo_TV_2015.png"
-              alt="Company Logo"
-              className="w-20 h-20 object-contain"
-            />
-          </div>
+        <div className="relative z-10 text-center max-w-md"> 
           <h1 className="text-4xl font-bold mb-4">Service Desk Portal</h1>
-          <p className="text-white/80 text-lg leading-relaxed">
+          <p className="text-white/80 font-semibold text-lg leading-relaxed">
             Manage your IT tickets efficiently, track issues, and provide
             seamless support — all from one dashboard.
           </p>
@@ -91,6 +83,13 @@ const login = () => {
       {/* Right side - login form */}
       <div className="flex w-full lg:w-1/2 justify-center items-center bg-gray-50 p-8">
         <div className="w-full max-w-md bg-white p-8 rounded-lg shadow-lg">
+          <div className="flex justify-center mb-2">
+            <img
+              src="/Logo2.png"
+              alt="Company Logo"
+              className="w-50 h-20 object-contain"
+            />
+          </div>
           <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">
             Login to your account
           </h2>
