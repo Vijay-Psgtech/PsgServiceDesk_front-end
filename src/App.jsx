@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Login from "./pages/Auth/login";
+import Dashboard from "./pages/Dashboard/Dashboard";
 import NavBar from "./components/Navbar";
 import UserDashboard from "./components/User/UserDashboard";
 import Attributes from "./components/Attributes";
@@ -14,11 +15,11 @@ function App() {
       <Routes>
         <Route path="" element={<Login />} />
         <Route
-          path="/attributes"
+          path="/dashboard"
           element={
             <PrivateRoute>
               <NavBar />
-              <Attributes />
+              <Dashboard />
             </PrivateRoute>
           }
         />
