@@ -12,7 +12,7 @@ function App() {
         <Routes>
           <Route path="" element={<Login />} />
           <Route path="/attributes" element={
-              <Attributes />
+              <NavBar />
           }/>
           <Route path="/user-dashboard" element={<UserDashboard />} />
         </Routes>

@@ -1,11 +1,15 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { NavLink } from "react-router-dom";
 import { useDepartment } from "../context/DepartmentContext";
+import { useInstitution } from "../context/InstitutionContext";
 import { Menu } from "lucide-react";
+import api from "../api/axios";
 
 export default function NavBar() {
   const { selectedDepartment, setSelectedDepartment } = useDepartment();
+  const { selectedInstitution, setSelectedInstiution } = useInstitution();
+  const [institutionOptions, setInstitutionOptions] = useState([]);
   const [menuOpen, setMenuOpen] = useState(false);
 
   const departments = [
@@ -24,6 +28,23 @@ export default function NavBar() {
     { name: "Users", path: "/users" },
     { name: "Activity", path: "/activity" },
   ];
+
+  useEffect(() => {
+    const getInstitution = async () => {
+      try{
+        const res = await api.get("/institutions");
+        const formattedOptions = res.data.map((inst) => ({
+          label: inst.name,
+          value: inst._id,
+        }));
+        setInstitutionOptions(formattedOptions);
+
+      }catch (error){
+        console.log("Failed to fetch institutions", error.message);
+      }
+    };
+    getInstitution();
+  },[]);
 
   return (
     <motion.header
@@ -69,6 +90,19 @@ export default function NavBar() {
           {departments.map((dep, idx) => (
             <option key={idx} value={dep} className="bg-black text-cyan-200">
               {dep}
+            </option>
+          ))}
+        </select>
+
+        {/* Institution Selector */}
+        <select
+          value={selectedInstitution}
+          onChange={(e) => setSelectedInstiution(e.target.value)}
+          className="border border-cyan-400/40 bg-black/40 text-cyan-200 rounded-lg px-3 py-1 text-sm font-medium focus:ring-2 focus:ring-fuchsia-400 outline-none transition-all shadow-[0_0_10px_rgba(0,255,255,0.15)] hover:shadow-[0_0_15px_rgba(255,0,255,0.3)]"
+        >
+          {institutionOptions.map((inst, index) => (
+            <option key={index} value={inst.value} className="bg-black text-cyan-200">
+              {inst.label}
             </option>
           ))}
         </select>
