@@ -1,759 +1,408 @@
 "use client";
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ChevronDown,
-  ChevronUp,
-  Edit3,
   Plus,
-  Trash,
-  User,
-  Settings,
+  Pencil,
+  Trash2,
+  Save,
+  Users,
+  Building2,
+  ClipboardList,
+  Clock,
   X,
 } from "lucide-react";
 
-/**
- * Full-screen Dark Neon DepartmentDetails
- * - Keeps all original logic and features
- * - Restyled: dark background, electric-blue neon accents, subtle glow shadows
- * - Framer motion animations retained
- *
- * Usage:
- * <DepartmentDetails initialDepartment={optionalDeptObject} />
- */
+// -----------------------------
+// Inline UI Components
+// -----------------------------
+const Card = ({ children, className }) => (
+  <div
+    className={`bg-gradient-to-b from-[#0a0f1f]/90 to-[#111827]/90 border border-cyan-500/30 rounded-3xl shadow-[0_0_30px_#00ffff30] backdrop-blur-xl ${className}`}
+  >
+    {children}
+  </div>
+);
 
-function SimpleModal({ open, onClose, title, children, footer }) {
+const CardContent = ({ children, className }) => (
+  <div className={`p-8 ${className}`}>{children}</div>
+);
+
+const Button = ({ children, onClick, variant = "solid", className }) => {
+  const base =
+    "px-4 py-2 rounded-xl font-semibold transition text-sm flex items-center gap-2";
+  const styles =
+    variant === "outline"
+      ? "border border-cyan-500/40 text-cyan-200 hover:bg-cyan-950/40"
+      : "bg-gradient-to-r from-cyan-600 to-purple-600 text-white shadow-[0_0_10px_#00ffff40] hover:scale-105";
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-        >
-          <motion.div
-            initial={{ y: 18, scale: 0.98 }}
-            animate={{ y: 0, scale: 1 }}
-            exit={{ y: 18, scale: 0.98 }}
-            transition={{ type: "spring", damping: 20, stiffness: 240 }}
-            className="w-full max-w-3xl bg-[#07101a] border border-blue-500/20 rounded-2xl shadow-[0_8px_40px_rgba(0,150,255,0.08)] p-6 text-gray-100"
-          >
-            <div className="flex items-center justify-between mb-4 pb-2 border-b border-blue-500/10">
-              <h3 className="text-lg font-semibold text-blue-300">{title}</h3>
-              <button
-                onClick={onClose}
-                aria-label="close"
-                className="p-1 text-gray-300 hover:text-blue-300"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="text-sm text-gray-200">{children}</div>
-
-            {footer && <div className="mt-6 flex justify-end gap-3">{footer}</div>}
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <button onClick={onClick} className={`${base} ${styles} ${className}`}>
+      {children}
+    </button>
   );
-}
+};
 
-export default function DepartmentDetails({ initialDepartment }) {
-  const defaultDept = {
-    id: "IT",
-    name: "IT Services",
-    services: [
-      "INTERNET NOT WORKING",
-      "TONER REFILLING",
-      "LAPTOP PROBLEM",
-      "WI-FI ISSUES",
-      "COMPUTER ISSUES",
-      "EMAIL ID",
-      "WEB HOSTING",
-      "SERVER ISSUES",
-      "SOFTWARE SUPPORT",
-      "CCTV ISSUES",
-      "NETWORK SUPPORT",
-      "PROJECTOR ISSUES",
-      "PRINTER ISSUE",
-    ],
-    escalation: { durationDays: 3, level1: "", level2: "", level3: "" },
-    members: [
-      {
-        id: "u1",
-        name: "Venugopal R",
-        role: "Department-Admin",
-        services: [],
-      },
-      {
-        id: "u2",
-        name: "ABINESH J - S10452",
-        role: "Member",
-        services: [
-          "INTERNET NOT WORKING",
-          "LAPTOP PROBLEM",
-          "COMPUTER ISSUES",
-          "SOFTWARE SUPPORT",
-        ],
-      },
-    ],
-  };
+const Input = ({ value, onChange, placeholder }) => (
+  <input
+    value={value}
+    onChange={onChange}
+    placeholder={placeholder}
+    className="w-full bg-[#0f172a] text-cyan-200 border border-cyan-500/30 focus:ring-cyan-400 focus:border-cyan-400 mb-4 rounded-lg px-3 py-2"
+  />
+);
 
-  const [dept, setDept] = useState(initialDepartment ?? defaultDept);
+// Tabs
+const Tabs = ({ tabs, active, onChange }) => (
+  <div className="flex justify-center mb-10">
+    <div className="flex bg-[#0f172a]/80 border border-cyan-500/30 rounded-2xl overflow-hidden">
+      {tabs.map((tab) => (
+        <button
+          key={tab}
+          onClick={() => onChange(tab)}
+          className={`px-6 py-3 text-sm font-medium ${
+            active === tab
+              ? "bg-cyan-500/30 text-cyan-200"
+              : "text-cyan-400 hover:bg-cyan-900/40"
+          }`}
+        >
+          {tab}
+        </button>
+      ))}
+    </div>
+  </div>
+);
 
-  // collapse state
-  const [openServices, setOpenServices] = useState(true);
-  const [openEscalation, setOpenEscalation] = useState(true);
-  const [openMembers, setOpenMembers] = useState(true);
-
-  // edit states
-  const [servicesEditingInline, setServicesEditingInline] = useState(false);
-  const [escEditingInline, setEscEditingInline] = useState(false);
-
-  // modals
-  const [servicesModalOpen, setServicesModalOpen] = useState(false);
-  const [escModalOpen, setEscModalOpen] = useState(false);
-  const [memberModalOpen, setMemberModalOpen] = useState(false);
-
-  // buffers
-  const [servicesBuffer, setServicesBuffer] = useState([...dept.services]);
-  const [newService, setNewService] = useState("");
-  const [escBuffer, setEscBuffer] = useState({ ...dept.escalation });
-  const [editingMember, setEditingMember] = useState(null);
-
-  // search
-  const [memberSearch, setMemberSearch] = useState("");
-
-  const filteredMembers = useMemo(() => {
-    if (!memberSearch.trim()) return dept.members;
-    const q = memberSearch.toLowerCase();
-    return dept.members.filter(
-      (m) =>
-        m.name.toLowerCase().includes(q) ||
-        (m.role && m.role.toLowerCase().includes(q)) ||
-        (m.services || []).some((s) => s.toLowerCase().includes(q))
-    );
-  }, [dept.members, memberSearch]);
-
-  // ---------- Services handlers ----------
-  const addServiceInline = (txt) => {
-    const s = String(txt || "").trim().toUpperCase();
-    if (!s) return;
-    if (dept.services.includes(s)) return;
-    setDept((d) => ({ ...d, services: [...d.services, s] }));
-  };
-
-  const removeServiceInline = (svc) => {
-    setDept((d) => ({
-      ...d,
-      services: d.services.filter((s) => s !== svc),
-      members: d.members.map((m) => ({
-        ...m,
-        services: (m.services || []).filter((s) => s !== svc),
-      })),
-    }));
-  };
-
-  const openServicesEditor = () => {
-    setServicesBuffer([...dept.services]);
-    setServicesModalOpen(true);
-  };
-
-  const saveServicesFromModal = () => {
-    const normalized = Array.from(
-      new Set(
-        servicesBuffer
-          .map((s) => String(s).trim())
-          .filter(Boolean)
-          .map((s) => s.toUpperCase())
-      )
-    );
-    // when removing services, also remove from members
-    setDept((d) => ({
-      ...d,
-      services: normalized,
-      members: d.members.map((m) => ({
-        ...m,
-        services: (m.services || []).filter((s) => normalized.includes(s)),
-      })),
-    }));
-    setServicesModalOpen(false);
-  };
-
-  // ---------- Escalation handlers ----------
-  const openEscEditor = () => {
-    setEscBuffer({ ...dept.escalation });
-    setEscModalOpen(true);
-  };
-
-  const saveEscFromModal = () => {
-    setDept((d) => ({ ...d, escalation: { ...escBuffer } }));
-    setEscModalOpen(false);
-  };
-
-  // ---------- Members handlers ----------
-  const openMemberEditor = (member) => {
-    setEditingMember({
-      ...member,
-      servicesAssigned: Array.from(member.services || []),
-    });
-    setMemberModalOpen(true);
-  };
-
-  const saveMemberFromModal = () => {
-    if (!editingMember) return;
-    setDept((d) => ({
-      ...d,
-      members: d.members.map((m) =>
-        m.id === editingMember.id
-          ? {
-              ...m,
-              name: editingMember.name,
-              role: editingMember.role,
-              services: Array.from(
-                new Set(
-                  (editingMember.servicesAssigned || [])
-                    .map((s) => String(s).trim())
-                    .filter(Boolean)
-                    .map((s) => s.toUpperCase())
-                )
-              ),
-            }
-          : m
-      ),
-    }));
-    setMemberModalOpen(false);
-    setEditingMember(null);
-  };
-
-  // ---------- small UI helpers ----------
-  const collapseVariant = {
-    hidden: { height: 0, opacity: 0 },
-    visible: { height: "auto", opacity: 1 },
-  };
-
-  return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-[#02050a] via-[#07101a] to-[#00060a] text-gray-100 p-8">
-      {/* background soft glows */}
-      <div className="pointer-events-none fixed inset-0 -z-10">
-        <div className="absolute top-[-20%] left-[-10%] w-[700px] h-[700px] rounded-full blur-[120px] bg-blue-600/20" />
-        <div className="absolute right-[-10%] bottom-[-10%] w-[600px] h-[600px] rounded-full blur-[100px] bg-cyan-500/12" />
-      </div>
-
-      {/* container */}
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-semibold text-blue-300 drop-shadow-[0_6px_30px_rgba(0,150,255,0.06)]">
-              {dept.name}
-            </h1>
-            <p className="text-sm text-blue-200/60">Department ID: {dept.id}</p>
-          </div>
-
-          <div className="flex items-center gap-3">
+// Modal
+const Modal = ({ open, onClose, title, children, onSave }) => (
+  <AnimatePresence>
+    {open && (
+      <>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.7 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40"
+          onClick={onClose}
+        />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8, y: 50 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.8, y: 50 }}
+          transition={{ duration: 0.3 }}
+          className="fixed z-50 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 
+            bg-gradient-to-br from-[#0f172a] via-[#111827] to-[#1e293b]
+            border border-cyan-500/40 shadow-[0_0_30px_#00ffff60]
+            rounded-3xl p-8 w-full max-w-md text-cyan-100"
+        >
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-lg font-semibold text-cyan-200">{title}</h3>
             <button
-              onClick={() => {
-                setDept(defaultDept);
-                setServicesBuffer([...defaultDept.services]);
-              }}
-              className="px-4 py-2 rounded-lg bg-transparent border border-blue-500/20 text-blue-200 hover:bg-[#062534]/40 transition"
+              onClick={onClose}
+              className="text-cyan-300 hover:text-white hover:bg-cyan-950/30 rounded-full p-1"
             >
-              Reset
+              <X className="h-5 w-5" />
             </button>
           </div>
-        </div>
-
-        {/* layout grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left column - Services & Escalation stacked */}
-          <div className="space-y-6 lg:col-span-2">
-            {/* SERVICES */}
-            <div className="rounded-2xl border border-blue-500/20 bg-[#06121a]/60 shadow-[0_10px_30px_rgba(0,150,255,0.04)] p-5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-900/30 flex items-center justify-center text-blue-300">
-                    <Settings size={18} />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-medium text-blue-200">Services</h3>
-                    <p className="text-xs text-blue-200/60">List of department services</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setServicesEditingInline((v) => !v)}
-                    className="text-sm text-blue-200/80 hover:text-blue-100 flex items-center gap-2"
-                  >
-                    <Edit3 size={14} /> Inline
-                  </button>
-
-                  <button
-                    onClick={openServicesEditor}
-                    className="text-sm text-blue-200/80 hover:text-blue-100 flex items-center gap-2"
-                  >
-                    <Plus size={14} /> Edit
-                  </button>
-
-                  <button
-                    onClick={() => setOpenServices((s) => !s)}
-                    className="p-2 rounded-full bg-[#04202a] hover:bg-[#0b3846] transition"
-                  >
-                    {openServices ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                  </button>
-                </div>
-              </div>
-
-              <AnimatePresence initial={false}>
-                {openServices && (
-                  <motion.div
-                    key="services"
-                    initial="hidden"
-                    animate="visible"
-                    exit="hidden"
-                    variants={collapseVariant}
-                    transition={{ duration: 0.18 }}
-                    className="mt-4"
-                  >
-                    <div className="flex flex-wrap gap-3">
-                      {dept.services.map((s) => (
-                        <div key={s} className="flex items-center gap-2">
-                          <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/30 bg-[#021426]/60 text-xs text-blue-200 shadow-[0_4px_18px_rgba(0,150,255,0.04)]">
-                            {s}
-                          </span>
-                          {servicesEditingInline && (
-                            <button
-                              onClick={() => removeServiceInline(s)}
-                              className="text-red-400 hover:text-red-500 text-xs p-1"
-                              aria-label={`remove ${s}`}
-                            >
-                              <Trash size={14} />
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-
-                    {servicesEditingInline && (
-                      <div className="mt-4 flex gap-2 items-center">
-                        <InlineServiceAdder onAdd={addServiceInline} />
-                      </div>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* ESCALATION */}
-            <div className="rounded-2xl border border-blue-500/20 bg-[#06121a]/60 shadow-[0_10px_30px_rgba(0,150,255,0.04)] p-5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-900/30 flex items-center justify-center text-amber-300">
-                    ⚡
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-medium text-blue-200">Escalation</h3>
-                    <p className="text-xs text-blue-200/60">Escalation duration and levels</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setEscEditingInline((v) => !v)}
-                    className="text-sm text-blue-200/80 hover:text-blue-100 flex items-center gap-2"
-                  >
-                    <Edit3 size={14} /> Inline
-                  </button>
-
-                  <button
-                    onClick={openEscEditor}
-                    className="text-sm text-blue-200/80 hover:text-blue-100 flex items-center gap-2"
-                  >
-                    <Plus size={14} /> Edit
-                  </button>
-
-                  <button
-                    onClick={() => setOpenEscalation((s) => !s)}
-                    className="p-2 rounded-full bg-[#04202a] hover:bg-[#0b3846] transition"
-                  >
-                    {openEscalation ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                  </button>
-                </div>
-              </div>
-
-              <AnimatePresence initial={false}>
-                {openEscalation && (
-                  <motion.div
-                    key="escalation"
-                    initial="hidden"
-                    animate="visible"
-                    exit="hidden"
-                    variants={collapseVariant}
-                    transition={{ duration: 0.18 }}
-                    className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-medium text-blue-200">Duration (days):</span>
-                      {escEditingInline ? (
-                        <input
-                          type="number"
-                          value={dept.escalation.durationDays}
-                          onChange={(e) =>
-                            setDept((d) => ({
-                              ...d,
-                              escalation: { ...d.escalation, durationDays: Number(e.target.value) },
-                            }))
-                          }
-                          className="w-24 rounded-md border border-blue-500/20 bg-[#021426]/50 px-3 py-1 text-blue-200"
-                        />
-                      ) : (
-                        <div className="rounded-md border border-blue-500/10 px-3 py-1 bg-[#021426]/40 text-blue-200">
-                          {dept.escalation.durationDays}
-                        </div>
-                      )}
-                    </div>
-
-                    {["level1", "level2", "level3"].map((lvl, idx) => (
-                      <div key={lvl}>
-                        <div className="text-sm text-blue-200 font-medium">Escalation Level {idx + 1} :</div>
-                        {escEditingInline ? (
-                          <input
-                            value={dept.escalation[lvl]}
-                            onChange={(e) =>
-                              setDept((d) => ({ ...d, escalation: { ...d.escalation, [lvl]: e.target.value } }))
-                            }
-                            className="mt-2 w-full rounded-md border border-blue-500/20 bg-[#021426]/50 px-3 py-1 text-blue-200"
-                          />
-                        ) : (
-                          <div className="mt-2 text-blue-200">{dept.escalation[lvl] || "-"}</div>
-                        )}
-                      </div>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-
-          {/* Right column - Members */}
-          <div className="space-y-6">
-            <div className="rounded-2xl border border-blue-500/20 bg-[#06121a]/60 p-5 shadow-[0_10px_30px_rgba(0,150,255,0.04)]">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-900/30 flex items-center justify-center text-green-300">
-                    <User size={18} />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-medium text-blue-200">Members</h3>
-                    <p className="text-xs text-blue-200/60">Department users and assigned services</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 mb-4">
-                <input
-                  value={memberSearch}
-                  onChange={(e) => setMemberSearch(e.target.value)}
-                  placeholder="Search members..."
-                  className="w-full rounded-md border border-blue-500/10 bg-[#021426]/40 px-3 py-2 text-blue-200 placeholder:text-blue-400/40"
-                />
-              </div>
-
-              <div className="space-y-3">
-                {filteredMembers.length === 0 ? (
-                  <div className="text-sm text-blue-200/50">No members found</div>
-                ) : (
-                  filteredMembers.map((m) => (
-                    <div
-                      key={m.id}
-                      className="flex items-start justify-between gap-3 p-3 rounded-lg border border-blue-500/8 bg-[#021426]/30"
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-md bg-[#01212c]/40 flex items-center justify-center text-blue-300">
-                          <User size={18} />
-                        </div>
-                        <div>
-                          <div className="text-sm text-blue-200 font-medium">{m.name}</div>
-                          <div className="text-xs text-blue-200/60">{m.role}</div>
-                          <div className="text-xs text-blue-200/50 mt-2">
-                            {(m.services || []).length ? m.services.join(", ") : "-"}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-start gap-2">
-                        <button
-                          onClick={() => openMemberEditor(m)}
-                          className="p-2 rounded-md bg-[#04202a] hover:bg-[#063445] text-blue-200"
-                        >
-                          <Edit3 size={16} />
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-
-            {/* small info card */}
-            <div className="rounded-2xl border border-blue-500/12 bg-[#06121a]/50 p-4 text-blue-200">
-              <div className="text-sm">
-                Escalation duration: <span className="font-semibold">{dept.escalation.durationDays} days</span>
-              </div>
-              <div className="text-xs text-blue-200/50 mt-2">
-                Levels: {dept.escalation.level1 || "-"}, {dept.escalation.level2 || "-"}, {dept.escalation.level3 || "-"}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* FOOTER actions */}
-        <div className="flex justify-end gap-3 mt-3">
-          <button
-            onClick={() => {
-              setServicesEditingInline(false);
-              setEscEditingInline(false);
-              setServicesModalOpen(false);
-              setEscModalOpen(false);
-              setMemberModalOpen(false);
-            }}
-            className="px-4 py-2 rounded-lg border border-blue-500/10 text-blue-200 hover:bg-[#042536]/30"
-          >
-            Close
-          </button>
-        </div>
-      </div>
-
-      {/* ---------- SERVICES MODAL ---------- */}
-      <SimpleModal
-        open={servicesModalOpen}
-        onClose={() => setServicesModalOpen(false)}
-        title="Edit Services"
-        footer={
-          <>
-            <button
-              onClick={() => setServicesModalOpen(false)}
-              className="px-3 py-1 rounded border border-blue-500/10 text-blue-200"
-            >
+          {children}
+          <div className="flex justify-end mt-6 gap-3">
+            <Button variant="outline" onClick={onClose}>
               Cancel
-            </button>
-            <button
-              onClick={saveServicesFromModal}
-              className="px-3 py-1 rounded bg-gradient-to-r from-blue-500 to-cyan-400 text-black font-semibold"
-            >
-              Save
-            </button>
-          </>
-        }
-      >
-        <div className="space-y-4">
-          <p className="text-sm text-blue-200/60">Reorder, remove, or add services.</p>
+            </Button>
+            <Button onClick={onSave}>Save</Button>
+          </div>
+        </motion.div>
+      </>
+    )}
+  </AnimatePresence>
+);
 
-          <div className="space-y-2 max-h-56 overflow-auto py-1">
-            {servicesBuffer.map((s, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <input
-                  value={s}
-                  onChange={(e) =>
-                    setServicesBuffer((arr) => arr.map((x, idx) => (idx === i ? e.target.value : x)))
-                  }
-                  className="w-full rounded-md border border-blue-500/10 bg-[#021426]/40 px-3 py-2 text-blue-200"
-                />
-                <button
-                  onClick={() => setServicesBuffer((arr) => arr.filter((_, idx) => idx !== i))}
-                  className="text-red-400 p-2 rounded-md hover:bg-[#2a0d0d]/5"
+// -----------------------------
+// Main Component
+// -----------------------------
+export default function ManageDepartment() {
+  const [activeTab, setActiveTab] = useState("Departments");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalType, setModalType] = useState("");
+  const [modalData, setModalData] = useState({});
+
+  const [departments, setDepartments] = useState([
+    { name: "IT MANAGEMENT", head: "John Doe" },
+    { name: "ELECTRICAL", head: "Jane Smith" },
+  ]);
+
+  const [services, setServices] = useState([
+    { name: "Network Support", dept: "IT MANAGEMENT" },
+    { name: "System Repair", dept: "GENERAL MAINTENANCE" },
+  ]);
+
+  const [escalations, setEscalations] = useState([
+    { level: "Level 1", contact: "supervisor@company.com", time: "2h" },
+    { level: "Level 2", contact: "manager@company.com", time: "4h" },
+    { level: "Level 3", contact: "admin@company.com", time: "6h" },
+  ]);
+
+  const [members, setMembers] = useState([
+    { name: "Alex Carter", role: "Technician", service: "Network Support" },
+    { name: "Maria Lee", role: "System Engineer", service: "System Repair" },
+  ]);
+
+  // -----------------------------
+  // Handlers
+  // -----------------------------
+  const handleAdd = (type) => {
+    setModalType(type);
+    setModalData({});
+    setModalOpen(true);
+  };
+
+  const handleEdit = (type, item) => {
+    setModalType(type);
+    setModalData(item);
+    setModalOpen(true);
+  };
+
+  const handleDelete = (type, index) => {
+    if (!window.confirm("Delete this item?")) return;
+    const map = {
+      Departments: [departments, setDepartments],
+      Services: [services, setServices],
+      Escalation: [escalations, setEscalations],
+      Members: [members, setMembers],
+    };
+    const [data, setData] = map[type];
+    setData(data.filter((_, i) => i !== index));
+  };
+
+  const handleSave = () => {
+    if (!modalType) return;
+    const map = {
+      Departments: [departments, setDepartments],
+      Services: [services, setServices],
+      Escalation: [escalations, setEscalations],
+      Members: [members, setMembers],
+    };
+    const [data, setData] = map[modalType];
+    const updated =
+      data.find((d) => d.name === modalData.name) ||
+      data.find((d) => d.level === modalData.level);
+    if (updated) {
+      setData(
+        data.map((item) =>
+          item.name === modalData.name || item.level === modalData.level
+            ? modalData
+            : item
+        )
+      );
+    } else {
+      setData([...data, modalData]);
+    }
+    setModalOpen(false);
+  };
+
+  // -----------------------------
+  // Field Renderer
+  // -----------------------------
+  const renderFields = () => {
+    if (!modalType) return null;
+    const map = {
+      Departments: [
+        { key: "name", placeholder: "Department Name" },
+        { key: "head", placeholder: "Department Head" },
+      ],
+      Services: [
+        { key: "name", placeholder: "Service Name" },
+        { key: "dept", placeholder: "Department" },
+      ],
+      Escalation: [
+        { key: "level", placeholder: "Level (e.g., Level 1)" },
+        { key: "contact", placeholder: "Contact Email" },
+        { key: "time", placeholder: "Time Threshold (e.g., 2h)" },
+      ],
+      Members: [
+        { key: "name", placeholder: "Member Name" },
+        { key: "role", placeholder: "Role" },
+        { key: "service", placeholder: "Service" },
+      ],
+    };
+    const inputs = map[modalType];
+    return inputs.map((f) => (
+      <Input
+        key={f.key}
+        placeholder={f.placeholder}
+        value={modalData[f.key] || ""}
+        onChange={(e) => setModalData({ ...modalData, [f.key]: e.target.value })}
+      />
+    ));
+  };
+
+  // -----------------------------
+  // Render Sections
+  // -----------------------------
+  const renderTabContent = () => {
+    if (activeTab === "Departments")
+      return (
+        <>
+          {departments.map((d, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex justify-between items-center bg-[#0f172a]/60 p-4 rounded-xl border border-cyan-500/10 mb-3"
+            >
+              <div>
+                <h4 className="font-semibold text-cyan-200">{d.name}</h4>
+                <p className="text-sm text-cyan-400">{d.head}</p>
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => handleEdit("Departments", d)}
                 >
-                  <Trash size={14} />
-                </button>
+                  <Pencil size={16} />
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => handleDelete("Departments", i)}
+                >
+                  <Trash2 size={16} />
+                </Button>
               </div>
-            ))}
-          </div>
+            </motion.div>
+          ))}
+        </>
+      );
 
-          <div className="flex items-center gap-2">
-            <input
-              value={newService}
-              onChange={(e) => setNewService(e.target.value)}
-              placeholder="New service name"
-              className="flex-1 rounded-md border border-blue-500/10 bg-[#021426]/40 px-3 py-2 text-blue-200"
-            />
-            <button
-              onClick={() => {
-                if (newService.trim()) {
-                  setServicesBuffer((arr) => [...arr, newService.trim().toUpperCase()]);
-                  setNewService("");
-                }
-              }}
-              className="px-3 py-2 rounded bg-gradient-to-r from-blue-500 to-cyan-400 text-black font-semibold"
+    if (activeTab === "Services")
+      return (
+        <div className="flex flex-wrap gap-3">
+          {services.map((s, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="px-4 py-2 bg-cyan-800/40 border border-cyan-500/20 rounded-full text-sm flex items-center gap-2"
             >
-              Add
-            </button>
-          </div>
-        </div>
-      </SimpleModal>
-
-      {/* ---------- ESCALATION MODAL ---------- */}
-      <SimpleModal
-        open={escModalOpen}
-        onClose={() => setEscModalOpen(false)}
-        title="Edit Escalation"
-        footer={
-          <>
-            <button
-              onClick={() => setEscModalOpen(false)}
-              className="px-3 py-1 rounded border border-blue-500/10 text-blue-200"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={saveEscFromModal}
-              className="px-3 py-1 rounded bg-gradient-to-r from-blue-500 to-cyan-400 text-black font-semibold"
-            >
-              Save
-            </button>
-          </>
-        }
-      >
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <label className="w-40 text-sm text-blue-200/70">Duration (days)</label>
-            <input
-              type="number"
-              value={escBuffer.durationDays}
-              onChange={(e) => setEscBuffer((d) => ({ ...d, durationDays: Number(e.target.value) }))}
-              className="w-24 rounded-md border border-blue-500/10 bg-[#021426]/40 px-3 py-2 text-blue-200"
-            />
-          </div>
-
-          {["level1", "level2", "level3"].map((lvl, i) => (
-            <div key={lvl} className="flex items-center gap-3">
-              <label className="w-40 text-sm text-blue-200/70">Escalation Level {i + 1}</label>
-              <input
-                value={escBuffer[lvl]}
-                onChange={(e) => setEscBuffer((d) => ({ ...d, [lvl]: e.target.value }))}
-                className="flex-1 rounded-md border border-blue-500/10 bg-[#021426]/40 px-3 py-2 text-blue-200"
-              />
-            </div>
+              {s.name}{" "}
+              <button onClick={() => handleDelete("Services", i)}>
+                <X size={14} className="text-pink-400" />
+              </button>
+            </motion.div>
           ))}
         </div>
-      </SimpleModal>
+      );
 
-      {/* ---------- MEMBER MODAL ---------- */}
-      <SimpleModal
-        open={memberModalOpen}
-        onClose={() => {
-          setMemberModalOpen(false);
-          setEditingMember(null);
-        }}
-        title={editingMember ? `Edit ${editingMember.name}` : "Edit Member"}
-        footer={
-          <>
-            <button
-              onClick={() => {
-                setMemberModalOpen(false);
-                setEditingMember(null);
-              }}
-              className="px-3 py-1 rounded border border-blue-500/10 text-blue-200"
+        if (activeTab === "Escalation")
+      return (
+        <>
+          {escalations.map((e, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-[#0f172a]/60 p-4 rounded-xl border border-cyan-500/10 mb-3"
             >
-              Cancel
-            </button>
-            <button
-              onClick={saveMemberFromModal}
-              className="px-3 py-1 rounded bg-gradient-to-r from-blue-500 to-cyan-400 text-black font-semibold"
-            >
-              Save
-            </button>
-          </>
-        }
-      >
-        {editingMember && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <label className="w-40 text-sm text-blue-200/70">Name</label>
-              <input
-                value={editingMember.name}
-                onChange={(e) => setEditingMember((m) => ({ ...m, name: e.target.value }))}
-                className="flex-1 rounded-md border border-blue-500/10 bg-[#021426]/40 px-3 py-2 text-blue-200"
-              />
-            </div>
-
-            <div className="flex items-center gap-3">
-              <label className="w-40 text-sm text-blue-200/70">Role</label>
-              <input
-                value={editingMember.role}
-                onChange={(e) => setEditingMember((m) => ({ ...m, role: e.target.value }))}
-                className="flex-1 rounded-md border border-blue-500/10 bg-[#021426]/40 px-3 py-2 text-blue-200"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm text-blue-200/70 block mb-2">Assigned Services</label>
-              <div className="grid grid-cols-2 gap-2 max-h-48 overflow-auto">
-                {dept.services.map((s) => {
-                  const checked = (editingMember.servicesAssigned || []).includes(s);
-                  return (
-                    <label key={s} className="flex items-center gap-2 text-sm text-blue-200/80">
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={(e) => {
-                          const checked = e.target.checked;
-                          setEditingMember((m) => ({
-                            ...m,
-                            servicesAssigned: checked
-                              ? [...(m.servicesAssigned || []), s]
-                              : (m.servicesAssigned || []).filter((x) => x !== s),
-                          }));
-                        }}
-                        className="accent-cyan-400"
-                      />
-                      <span>{s}</span>
-                    </label>
-                  );
-                })}
+              <h4 className="font-semibold text-cyan-300">{e.level}</h4>
+              <p className="text-sm text-cyan-400">{e.contact}</p>
+              <p className="text-xs text-cyan-500">{e.time}</p>
+              <div className="mt-3 flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => handleEdit("Escalation", e)}  
+                >
+                  <Pencil size={16} />
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => handleDelete("Escalation", i)}
+                >
+                  <Trash2 size={16} />
+                </Button>
               </div>
-            </div>
-          </div>
-        )}
-      </SimpleModal>
-    </div>
-  );
-}
+            </motion.div>
+          ))}
+        </>
+      );
 
-/* InlineServiceAdder - small helper component */
-function InlineServiceAdder({ onAdd }) {
-  const [val, setVal] = useState("");
+    if (activeTab === "Members")
+      return (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {members.map((m, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="bg-[#0f172a]/70 border border-cyan-500/20 p-4 rounded-2xl"
+            >
+              <h4 className="font-semibold text-cyan-200">{m.name}</h4>
+              <p className="text-sm text-cyan-400">{m.role}</p>
+              <p className="text-xs text-cyan-500">{m.service}</p>
+              <div className="mt-3 flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => handleEdit("Members", m)}
+                >
+                  <Pencil size={16} />
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => handleDelete("Members", i)}
+                >
+                  <Trash2 size={16} />
+                </Button>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      );
+  };
+
+  // -----------------------------
+  // Main Render
+  // -----------------------------
   return (
-    <div className="flex w-full gap-2">
-      <input
-        value={val}
-        onChange={(e) => setVal(e.target.value)}
-        placeholder="Add service and press Add"
-        className="flex-1 rounded-md border border-blue-500/10 bg-[#021426]/40 px-3 py-2 text-blue-200"
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            if (val.trim()) {
-              onAdd(val.trim());
-              setVal("");
-            }
-          }
-        }}
+    <div className="min-h-screen bg-[#020617] text-cyan-100 p-10 relative overflow-hidden">
+      <motion.div
+        className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,#00ffff30,transparent_70%)]"
+        animate={{ opacity: [0.3, 0.6, 0.3] }}
+        transition={{ duration: 6, repeat: Infinity }}
       />
-      <button
-        onClick={() => {
-          if (val.trim()) {
-            onAdd(val.trim());
-            setVal("");
-          }
-        }}
-        className="px-3 py-2 rounded bg-gradient-to-r from-blue-500 to-cyan-400 text-black font-semibold"
+      <motion.div
+        className="absolute inset-0 bg-[radial-gradient(circle_at_70%_70%,#9333ea20,transparent_70%)]"
+        animate={{ opacity: [0.2, 0.5, 0.2] }}
+        transition={{ duration: 7, repeat: Infinity }}
+      />
+
+      <div className="relative z-10 max-w-6xl mx-auto">
+        <h1 className="text-4xl font-bold text-center mb-10 text-cyan-300">
+          Manage Departments
+        </h1>
+
+        <Tabs
+          tabs={["Departments", "Services", "Escalation", "Members"]}
+          active={activeTab}
+          onChange={setActiveTab}
+        />
+
+        <Card>
+          <CardContent>
+            <div className="flex justify-end mb-6">
+              <Button onClick={() => handleAdd(activeTab)}>
+                <Plus size={16} /> Add {activeTab}
+              </Button>
+            </div>
+            {renderTabContent()}
+          </CardContent>
+        </Card>
+      </div>
+
+      <Modal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={`Add / Edit ${modalType}`}
+        onSave={handleSave}
       >
-        <Plus size={14} />
-      </button>
+        {renderFields()}
+      </Modal>
     </div>
   );
 }
-
-            
