@@ -3,7 +3,7 @@ import { getAuth, setAuth } from "../context/AuthContext";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api",
-  withCredentials: true,
+  withCredentials: true, // ✅ important for cookies
 });
 
 api.interceptors.request.use((config) => {
@@ -20,7 +20,7 @@ let failedQueue = [];
 const processQueue = (error, token = null) => {
   failedQueue.forEach((prom) => {
     if (error) prom.reject(error);
-    else prom.reslove(token);
+    else prom.resolve(token); // ✅ fixed typo
   });
   failedQueue = [];
 };
@@ -29,10 +29,11 @@ api.interceptors.response.use(
   (res) => res,
   async (err) => {
     const originalRequest = err.config;
+
     if (err.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
         try {
-          const token = await new Promise(function (resolve, reject) {
+          const token = await new Promise((resolve, reject) => {
             failedQueue.push({ resolve, reject });
           });
           originalRequest.headers.Authorization = `Bearer ${token}`;
@@ -41,6 +42,7 @@ api.interceptors.response.use(
           return await Promise.reject(error);
         }
       }
+
       originalRequest._retry = true;
       isRefreshing = true;
 
@@ -53,8 +55,8 @@ api.interceptors.response.use(
               "Authorization"
             ] = `Bearer ${data.accessToken}`;
             originalRequest.headers[
-              "Authoriation"
-            ] = `Bearer ${data.accessToken}`;
+              "Authorization"
+            ] = `Bearer ${data.accessToken}`; // ✅ fixed
             processQueue(null, data.accessToken);
             resolve(api(originalRequest));
           })
@@ -67,6 +69,7 @@ api.interceptors.response.use(
           });
       });
     }
+
     return Promise.reject(err);
   }
 );
