@@ -22,11 +22,13 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       await api.post("/auth/logout");
-    } catch (error) {
+    } finally {
       setAuth({ accessToken: null, user: null });
       setAuthState({ accessToken: null, user: null });
     }
   };
+
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const tryRefresh = async () => {
@@ -36,10 +38,14 @@ export const AuthProvider = ({ children }) => {
         login(accessToken, user);
       } catch (error) {
         console.error("Refresh token failed: ", error);
+      } finally {
+        setLoading(false);
       }
     };
     tryRefresh();
   }, []);
+
+  if (loading) return <div>Loading...</div>
 
   return (
     <AuthContext.Provider value={{ auth: authState, login, logout }}>
