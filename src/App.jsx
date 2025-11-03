@@ -3,11 +3,13 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Login from "./pages/Auth/login";
-import Dashboard from "./pages/Dashboard/Dashboard";
 import NavBar from "./components/Navbar";
 import UserDashboard from "./components/User/UserDashboard";
+import Dashboard from "./pages/Dashboard";
 import Attributes from "./components/Attributes";
 import PrivateRoute from "./components/PrivateRoute";
+import ActivityPage from "./pages/ActivityPages";
+import DepartmentDetails from "./pages/ManageDepartment";
 
 function App() {
   return (
@@ -20,6 +22,33 @@ function App() {
             <PrivateRoute>
               <NavBar />
               <Dashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route 
+          path="/attributes"
+          element={
+            <PrivateRoute>
+              <NavBar />
+              <Attributes />
+            </PrivateRoute>
+          }
+        />
+        <Route 
+          path="/activity"
+          element={
+            <PrivateRoute>
+              <NavBar />
+              <ActivityPage />
+            </PrivateRoute>
+          }
+        />
+        <Route 
+          path="/departments"
+          element={
+            <PrivateRoute>
+              <NavBar />
+              <DepartmentDetails />
             </PrivateRoute>
           }
         />
