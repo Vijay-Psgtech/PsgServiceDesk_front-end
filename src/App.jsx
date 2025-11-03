@@ -8,6 +8,7 @@ import NavBar from "./components/Navbar";
 import UserDashboard from "./components/User/UserDashboard";
 import Attributes from "./components/Attributes";
 import PrivateRoute from "./components/PrivateRoute";
+import ActivityPage from "./pages/ActivityPages";
 
 function App() {
   return (
@@ -20,6 +21,24 @@ function App() {
             <PrivateRoute>
               <NavBar />
               <Dashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route 
+          path="/attributes"
+          element={
+            <PrivateRoute>
+              <NavBar />
+              <Attributes />
+            </PrivateRoute>
+          }
+        />
+        <Route 
+          path="/activity"
+          element={
+            <PrivateRoute>
+              <NavBar />
+              <ActivityPage />
             </PrivateRoute>
           }
         />
