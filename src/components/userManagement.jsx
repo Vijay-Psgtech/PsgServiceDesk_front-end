@@ -1,14 +1,7 @@
 "use client";
 import React, { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Plus,
-  Pencil,
-  Trash2,
-  CheckCircle,
-  XCircle,
-  Users,
-} from "lucide-react";
+import { Plus, Pencil, Trash2, CheckCircle, XCircle, Users } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Card, CardContent } from "./ui/card";
@@ -32,11 +25,7 @@ const UserManagement = () => {
     },
   ]);
 
-  const [newUser, setNewUser] = useState({
-    name: "",
-    department: "",
-    role: "",
-  });
+  const [newUser, setNewUser] = useState({ name: "", department: "", role: "" });
   const [editingUser, setEditingUser] = useState(null);
 
   const filteredUsers = useMemo(() => {
@@ -64,7 +53,9 @@ const UserManagement = () => {
   };
 
   const handleSaveEdit = () => {
-    setUsers(users.map((u) => (u.id === editingUser.id ? editingUser : u)));
+    setUsers(
+      users.map((u) => (u.id === editingUser.id ? editingUser : u))
+    );
     setEditingUser(null);
   };
 
@@ -73,7 +64,11 @@ const UserManagement = () => {
   };
 
   const handleToggleStatus = (id) => {
-    setUsers(users.map((u) => (u.id === id ? { ...u, active: !u.active } : u)));
+    setUsers(
+      users.map((u) =>
+        u.id === id ? { ...u, active: !u.active } : u
+      )
+    );
   };
 
   return (
@@ -238,11 +233,7 @@ const UserManagement = () => {
                         onClick={() => handleToggleStatus(user.id)}
                         className="bg-fuchsia-500/20 hover:bg-fuchsia-500/40 text-fuchsia-300 rounded-lg"
                       >
-                        {user.active ? (
-                          <XCircle size={16} />
-                        ) : (
-                          <CheckCircle size={16} />
-                        )}
+                        {user.active ? <XCircle size={16} /> : <CheckCircle size={16} />}
                       </Button>
                       <Button
                         size="sm"

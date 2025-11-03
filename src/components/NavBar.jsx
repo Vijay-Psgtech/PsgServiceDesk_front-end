@@ -23,7 +23,7 @@ export default function NavBar() {
   const navItems = [
     { name: "Dashboard", path: "/dashboard" },
     { name: "Tickets", path: "/tickets" },
-    { name: "Departments", path: "/deapartments" },
+    { name: "Departments", path: "/departments" },
     { name: "Attributes", path: "/attributes" },
     { name: "Users", path: "/users" },
     { name: "Activity", path: "/activity" },
@@ -95,7 +95,7 @@ export default function NavBar() {
         </select>
 
         {/* Institution Selector */}
-        <select
+        {/* <select
           value={selectedInstitution}
           onChange={(e) => setSelectedInstiution(e.target.value)}
           className="border border-cyan-400/40 bg-black/40 text-cyan-200 rounded-lg px-3 py-1 text-sm font-medium focus:ring-2 focus:ring-fuchsia-400 outline-none transition-all shadow-[0_0_10px_rgba(0,255,255,0.15)] hover:shadow-[0_0_15px_rgba(255,0,255,0.3)]"
@@ -105,7 +105,7 @@ export default function NavBar() {
               {inst.label}
             </option>
           ))}
-        </select>
+        </select> */}
       </nav>
 
       {/* Mobile Nav */}

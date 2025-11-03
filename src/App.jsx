@@ -11,6 +11,7 @@ import Attributes from "./components/Attributes";
 import PrivateRoute from "./components/PrivateRoute";
 import ActivityPage from "./pages/ActivityPages";
 import DepartmentDetails from "./pages/ManageDepartment";
+import UserManagement from "./components/userManagement";
 
 function App() {
   return (
@@ -59,6 +60,15 @@ function App() {
             <PrivateRoute>
               <NavBar />
               <DepartmentDetails />
+            </PrivateRoute>
+          }
+        />
+        <Route 
+          path="/users"
+          element={
+            <PrivateRoute>
+              <NavBar />
+              <UserManagement />
             </PrivateRoute>
           }
         />
