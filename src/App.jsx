@@ -9,6 +9,7 @@ import UserDashboard from "./components/User/UserDashboard";
 import Attributes from "./components/Attributes";
 import PrivateRoute from "./components/PrivateRoute";
 import ActivityPage from "./pages/ActivityPages";
+import DepartmentDetails from "./pages/ManageDepartment";
 
 function App() {
   return (
@@ -39,6 +40,15 @@ function App() {
             <PrivateRoute>
               <NavBar />
               <ActivityPage />
+            </PrivateRoute>
+          }
+        />
+        <Route 
+          path="/departments"
+          element={
+            <PrivateRoute>
+              <NavBar />
+              <DepartmentDetails />
             </PrivateRoute>
           }
         />
