@@ -1,9 +1,9 @@
 "use client";
 import React, { useEffect, useState, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import TicketColumn from "../../components/TicketColumn";
-import TaskChart from "../../components/TaskChart";
-import { CanvasRevealEffect } from "../../components/ui/canvas-reveal-effect";
+import TicketColumn from "../components/TicketColumn";
+import TaskChart from "../components/TaskChart";
+import { CanvasRevealEffect } from "../components/ui/canvas-reveal-effect";
 
 // Team members
 const teamMembers = [
