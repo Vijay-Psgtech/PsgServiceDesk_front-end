@@ -6,10 +6,12 @@ import Login from "./pages/Auth/login";
 import NavBar from "./components/Navbar";
 import UserDashboard from "./components/User/UserDashboard";
 import Dashboard from "./pages/Dashboard";
+import TicketsTable from "./components/ui/TicketsTables";
 import Attributes from "./components/Attributes";
 import PrivateRoute from "./components/PrivateRoute";
 import ActivityPage from "./pages/ActivityPages";
 import DepartmentDetails from "./pages/ManageDepartment";
+import UserManagement from "./components/userManagement";
 
 function App() {
   return (
@@ -22,6 +24,15 @@ function App() {
             <PrivateRoute>
               <NavBar />
               <Dashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route 
+          path="/tickets"
+          element={
+            <PrivateRoute>
+              <NavBar />
+              <TicketsTable />
             </PrivateRoute>
           }
         />
@@ -49,6 +60,15 @@ function App() {
             <PrivateRoute>
               <NavBar />
               <DepartmentDetails />
+            </PrivateRoute>
+          }
+        />
+        <Route 
+          path="/users"
+          element={
+            <PrivateRoute>
+              <NavBar />
+              <UserManagement />
             </PrivateRoute>
           }
         />

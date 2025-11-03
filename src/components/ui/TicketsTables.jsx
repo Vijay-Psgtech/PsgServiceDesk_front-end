@@ -3,7 +3,7 @@ import React, { useState, useMemo, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Search, Plus, MoreVertical, ArrowUpDown } from "lucide-react";
 import TaskSummary from "../TaskSummary";
-import { tickets as ticketData } from "../../assets/api/api";
+import { tickets as ticketData } from "../../api/tickets";
 
 export default function TicketsTable() {
   const [searchTerm, setSearchTerm] = useState("");
