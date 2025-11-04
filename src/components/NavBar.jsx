@@ -60,7 +60,7 @@ export default function NavBar() {
         transition={{ delay: 0.3 }}
         className="text-2xl font-bold tracking-wide bg-gradient-to-r from-cyan-400 via-fuchsia-500 to-purple-500 bg-clip-text text-transparent animate-gradient-x select-none"
       >
-        ⚡Ticket Manager
+        ⚡PSG Service Desk
       </motion.h1>
 
       {/* Desktop Nav */}

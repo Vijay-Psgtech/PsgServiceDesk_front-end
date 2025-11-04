@@ -20,7 +20,7 @@ function App() {
         <Route
           path="/dashboard"
           element={
-            <PrivateRoute>
+            <PrivateRoute allowedRoles={["superadmin","admin"]}>
               <NavBar />
               <Dashboard />
             </PrivateRoute>
@@ -29,7 +29,7 @@ function App() {
         <Route 
           path="/tickets"
           element={
-            <PrivateRoute>
+            <PrivateRoute allowedRoles={["superadmin","admin"]}>
               <NavBar />
               <TicketsTable />
             </PrivateRoute>
@@ -38,7 +38,7 @@ function App() {
         <Route 
           path="/attributes"
           element={
-            <PrivateRoute>
+            <PrivateRoute allowedRoles={["superadmin","admin"]}>
               <NavBar />
               <Attributes />
             </PrivateRoute>
@@ -47,7 +47,7 @@ function App() {
         <Route 
           path="/activity"
           element={
-            <PrivateRoute>
+            <PrivateRoute allowedRoles={["superadmin","admin"]}>
               <NavBar />
               <ActivityPage />
             </PrivateRoute>
@@ -56,7 +56,7 @@ function App() {
         <Route 
           path="/departments"
           element={
-            <PrivateRoute>
+            <PrivateRoute allowedRoles={["superadmin","admin"]}>
               <NavBar />
               <DepartmentDetails />
             </PrivateRoute>
@@ -65,20 +65,13 @@ function App() {
         <Route 
           path="/users"
           element={
-            <PrivateRoute>
+            <PrivateRoute allowedRoles={["superadmin","admin"]}>
               <NavBar />
               <UserManagement />
             </PrivateRoute>
           }
         />
-        <Route
-          path="/user-dashboard"
-          element={
-            <PrivateRoute>
-              <UserDashboard />
-            </PrivateRoute>
-          }
-        />
+        <Route path="/user-dashboard" element={<UserDashboard /> } />
       </Routes>
   );
 }

@@ -14,8 +14,8 @@ createRoot(document.getElementById("root")).render(
       <ContextWrapper>
         <App />
       </ContextWrapper>
-      <ToastContainer position="top-right" autoClose={3000} />
     </BrowserRouter>
+    <ToastContainer position="top-right" autoClose={3000} />
   </StrictMode>
   
 );
