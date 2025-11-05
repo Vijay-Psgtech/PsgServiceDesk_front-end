@@ -1,24 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { NavLink } from "react-router-dom";
-import { useDepartment } from "../context/DepartmentContext";
-import { useInstitution } from "../context/InstitutionContext";
-import { Menu } from "lucide-react";
-import api from "../api/axios";
+import { NavLink, useNavigate } from "react-router-dom";
+import { Menu, UserCircle, LogOut } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 export default function NavBar() {
-  const { selectedDepartment, setSelectedDepartment } = useDepartment();
-  const { selectedInstitution, setSelectedInstiution } = useInstitution();
-  const [institutionOptions, setInstitutionOptions] = useState([]);
+  const { auth, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
-
-  const departments = [
-    "All Departments",
-    "IT Services",
-    "HR",
-    "Finance",
-    "Operations",
-  ];
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef(null);
+  const navigate = useNavigate();
 
   const navItems = [
     { name: "Dashboard", path: "/dashboard" },
@@ -29,22 +20,16 @@ export default function NavBar() {
     { name: "Activity", path: "/activity" },
   ];
 
+  // Close user menu when clicking outside
   useEffect(() => {
-    const getInstitution = async () => {
-      try{
-        const res = await api.get("/institutions");
-        const formattedOptions = res.data.map((inst) => ({
-          label: inst.name,
-          value: inst._id,
-        }));
-        setInstitutionOptions(formattedOptions);
-
-      }catch (error){
-        console.log("Failed to fetch institutions", error.message);
+    const handleDocClick = (e) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setUserMenuOpen(false);
       }
     };
-    getInstitution();
-  },[]);
+    document.addEventListener("mousedown", handleDocClick);
+    return () => document.removeEventListener("mousedown", handleDocClick);
+  }, []);
 
   return (
     <motion.header
@@ -81,31 +66,45 @@ export default function NavBar() {
           </NavLink>
         ))}
 
-        {/* Department Selector */}
-        <select
-          value={selectedDepartment}
-          onChange={(e) => setSelectedDepartment(e.target.value)}
-          className="border border-cyan-400/40 bg-black/40 text-cyan-200 rounded-lg px-3 py-1 text-sm font-medium focus:ring-2 focus:ring-fuchsia-400 outline-none transition-all shadow-[0_0_10px_rgba(0,255,255,0.15)] hover:shadow-[0_0_15px_rgba(255,0,255,0.3)]"
-        >
-          {departments.map((dep, idx) => (
-            <option key={idx} value={dep} className="bg-black text-cyan-200">
-              {dep}
-            </option>
-          ))}
-        </select>
+        <div className="inline-flex gap-2 md-2 text-white">
+          {/* User button with dropdown */}
+          <div ref={userMenuRef} className="relative">
+            <button
+              onClick={() => setUserMenuOpen((s) => !s)}
+              className="inline-flex items-center gap-2 text-sm font-medium text-cyan-200 hover:text-cyan-400 px-2 py-1 rounded-md focus:outline-none"
+              aria-haspopup="true"
+              aria-expanded={userMenuOpen}
+            >
+              <UserCircle size={20} />
+              <span className="select-none">{auth?.user?.userName || "User"}</span>
+              <span className="ml-1 text-xs">▾</span>
+            </button>
 
-        {/* Institution Selector */}
-        {/* <select
-          value={selectedInstitution}
-          onChange={(e) => setSelectedInstiution(e.target.value)}
-          className="border border-cyan-400/40 bg-black/40 text-cyan-200 rounded-lg px-3 py-1 text-sm font-medium focus:ring-2 focus:ring-fuchsia-400 outline-none transition-all shadow-[0_0_10px_rgba(0,255,255,0.15)] hover:shadow-[0_0_15px_rgba(255,0,255,0.3)]"
-        >
-          {institutionOptions.map((inst, index) => (
-            <option key={index} value={inst.value} className="bg-black text-cyan-200">
-              {inst.label}
-            </option>
-          ))}
-        </select> */}
+            <AnimatePresence>
+              {userMenuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.14 }}
+                  className="absolute right-0 mt-2 w-40 bg-black/80 border border-cyan-400/30 backdrop-blur-xl rounded-lg shadow-[0_8px_30px_rgba(0,0,0,0.6)] z-50 overflow-hidden"
+                >
+                  <button
+                    onClick={() => {
+                      setUserMenuOpen(false);
+                      logout();
+                      navigate('/');
+                    }}
+                    className="w-full text-left px-3 py-2 text-sm text-gray-200 hover:bg-white/5 flex items-center gap-2"
+                  >
+                    <LogOut size={16} />
+                    <span>Logout</span>
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
       </nav>
 
       {/* Mobile Nav */}
@@ -140,21 +139,25 @@ export default function NavBar() {
                   {item.name}
                 </NavLink>
               ))}
-              <select
-                value={selectedDepartment}
-                onChange={(e) => setSelectedDepartment(e.target.value)}
-                className="mt-3 mx-4 border border-cyan-400/40 bg-black/40 text-cyan-200 rounded-lg px-3 py-1 text-sm font-medium focus:ring-2 focus:ring-fuchsia-400 outline-none transition-all"
-              >
-                {departments.map((dep, idx) => (
-                  <option
-                    key={idx}
-                    value={dep}
-                    className="bg-black text-cyan-200"
-                  >
-                    {dep}
-                  </option>
-                ))}
-              </select>
+              
+              {/* User Info & Logout for Mobile */}
+              <div className="mt-3 pt-3 border-t border-cyan-400/30">
+                <div className="px-4 py-2 flex items-center gap-2 text-sm font-medium text-cyan-200">
+                  <UserCircle size={18} />
+                  <span>{auth?.user?.userName || "User"}</span>
+                </div>
+                <button
+                  onClick={() => {
+                    setMenuOpen(false);
+                    logout();
+                    navigate('/');
+                  }}
+                  className="w-full px-4 py-2 text-sm font-medium text-gray-300 hover:text-fuchsia-400 hover:bg-white/5 flex items-center gap-2"
+                >
+                  <LogOut size={16} />
+                  <span>Logout</span>
+                </button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
