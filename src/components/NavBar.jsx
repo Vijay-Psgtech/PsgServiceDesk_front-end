@@ -139,6 +139,25 @@ export default function NavBar() {
                   {item.name}
                 </NavLink>
               ))}
+              
+              {/* User Info & Logout for Mobile */}
+              <div className="mt-3 pt-3 border-t border-cyan-400/30">
+                <div className="px-4 py-2 flex items-center gap-2 text-sm font-medium text-cyan-200">
+                  <UserCircle size={18} />
+                  <span>{auth?.user?.userName || "User"}</span>
+                </div>
+                <button
+                  onClick={() => {
+                    setMenuOpen(false);
+                    logout();
+                    navigate('/');
+                  }}
+                  className="w-full px-4 py-2 text-sm font-medium text-gray-300 hover:text-fuchsia-400 hover:bg-white/5 flex items-center gap-2"
+                >
+                  <LogOut size={16} />
+                  <span>Logout</span>
+                </button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
