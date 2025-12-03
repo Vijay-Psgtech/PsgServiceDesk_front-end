@@ -19,6 +19,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
+import { __values } from "tslib";
 
 // Neon colors
 const neonBlue = "#00FFFF";
@@ -85,7 +86,7 @@ export default function ActivityPage() {
   }, [search, tickets]); // ✅ include tickets safely
 
   const stats = useMemo(() => {
-    return {
+    return {       
       total: tickets.length,
       pending: tickets.filter((t) => t.status === "Pending").length,
       inProgress: tickets.filter((t) => t.status === "In Progress").length,
@@ -112,9 +113,7 @@ export default function ActivityPage() {
         className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-center"
       >
         <div>
-          <h1 className="text-3xl font-bold text-cyan-400">
-            Activity Overview
-          </h1>
+          <h1 className="text-3xl font-bold text-cyan-400">Activity Overview</h1>
           <p className="text-sm text-gray-400">
             Real-time ticket distribution and department performance
           </p>
@@ -169,7 +168,7 @@ export default function ActivityPage() {
       </motion.div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">    
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -219,7 +218,7 @@ export default function ActivityPage() {
           </h3>
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={[stats]}>
-              <XAxis dataKey="name" hide />
+              <XAxis dataKey="name" />
               <YAxis />
               <Tooltip
                 contentStyle={{
@@ -245,9 +244,7 @@ export default function ActivityPage() {
         className="bg-[#0E1324] border border-cyan-500/30 rounded-xl shadow-lg shadow-cyan-500/10 overflow-hidden"
       >
         <div className="px-6 py-4 border-b border-cyan-500/20 flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-cyan-400">
-            All Ticket Activities
-          </h3>
+          <h3 className="text-lg font-semibold text-cyan-400">All Ticket Activities</h3>
           <p className="text-xs text-gray-400">
             Showing {filteredTickets.length} of {tickets.length}
           </p>
