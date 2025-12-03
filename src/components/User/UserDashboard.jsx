@@ -15,23 +15,75 @@ import {
   Sun,
   Moon,
 } from "lucide-react";
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
+import {
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Legend,
+} from "recharts";
 import dayjs from "dayjs";
 
 /* ===========================
-   Part 1 — Data, helpers & hooks
-   (single-user focused)
+   LocalStorage Keys & Helpers
    =========================== */
+const LS_TICKETS = "ud_tickets_v3";
+const LS_THEME = "ud_theme_v3";
+const LS_LEAVES = "ud_leaves_v3";
+const LS_ACTIVITY = "ud_activity_v3";
+const LS_ONCALL = "ud_oncall_v3";
+const LS_NOTIFS = "ud_notifs_v3";
+const LS_VIEW = "ud_view_v3";
 
-// LocalStorage Keys
-const LS_TICKETS = "ud_tickets_v1"; // tickets for this user
-const LS_THEME = "ud_theme_v1"; // dark/light
-const LS_LEAVES = "ud_leaves_v1"; // planned leaves (array)
-const LS_ACTIVITY = "ud_activity_v1"; // activity log
+function safeLoad(key) {
+  try {
+    if (typeof window === "undefined") return null;
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+function safeSave(key, v) {
+  try {
+    if (typeof window === "undefined") return;
+    localStorage.setItem(key, JSON.stringify(v));
+  } catch {}
+}
 
-// Sample seeded tickets (only if none in storage)
+/* ===========================
+   Block mapping (auto-assign)
+   =========================== */
+const DEPARTMENT_BLOCK_MAP = {
+  "IT Services": "F Block",
+  Facilities: "B Block",
+  HR: "D Block",
+  Finance: "A Block",
+  Security: "C Block",
+};
+
+/* ===========================
+   Colors
+   =========================== */
+const COLORS = {
+  Open: "#6b46c1",
+  "In Progress": "#f59e0b",
+  Resolved: "#10b981",
+  OpenBar: "#60a5fa",
+  ResolvedBar: "#34d399",
+};
+
+/* ===========================
+   Seed tickets (if none)
+   =========================== */
 function seedTickets() {
-  const now = new Date();
+  const a = dayjs().subtract(3, "day").toISOString();
+  const b = dayjs().subtract(6, "day").toISOString();
   const seed = [
     {
       id: `IT${Date.now().toString().slice(-6)}A`,
@@ -41,7 +93,8 @@ function seedTickets() {
       asset: "System-09",
       priority: "High",
       status: "Open",
-      createdOn: dayjs().subtract(3, "day").toISOString(),
+      block: "F Block",
+      createdOn: a,
       issue: "Slow boot",
     },
     {
@@ -52,7 +105,8 @@ function seedTickets() {
       asset: "Printer-12",
       priority: "Medium",
       status: "Resolved",
-      createdOn: dayjs().subtract(6, "day").toISOString(),
+      block: "B Block",
+      createdOn: b,
       resolvedOn: dayjs().subtract(4, "day").toISOString(),
       issue: "Paper jam",
     },
@@ -61,43 +115,20 @@ function seedTickets() {
   return seed;
 }
 
-function safeLoad(key) {
-  try {
-    if (typeof window === "undefined") return null;
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : null;
-  } catch (e) {
-    return null;
-  }
-}
-function safeSave(key, v) {
-  try {
-    if (typeof window === "undefined") return;
-    localStorage.setItem(key, JSON.stringify(v));
-  } catch (e) {}
-}
-
-const COLORS = {
-  Open: "#6b46c1",
-  "In Progress": "#f59e0b",
-  Resolved: "#10b981",
-};
-
 /* ===========================
-   Part 2 — Component
+   Main component
    =========================== */
-
 export default function UserDashboard() {
-  // ---------- SINGLE USER (current) ----------
-  // In this simplified version there's only one "user" — the person using the dashboard.
-  // We keep a small currentUser object for display/assignment purposes.
+  // ---------- current user ----------
   const currentUser = useMemo(
     () => ({
       id: "S10453",
       userId: "S10453",
       name: "Sarath",
+      institution: "ABC Institute of Technology",
       department: "IT Services",
       email: "sarath@example.com",
+      mobile: "+91-98765-43210",
     }),
     []
   );
@@ -106,23 +137,15 @@ export default function UserDashboard() {
   const [tickets, setTickets] = useState(
     () => safeLoad(LS_TICKETS) ?? seedTickets()
   );
-  const [theme, setTheme] = useState(() => {
-    try {
-      const s = safeLoad(LS_THEME);
-      if (s) return s;
-      if (typeof window !== "undefined" && window.matchMedia) {
-        return window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light";
-      }
-      return "light";
-    } catch {
-      return "light";
-    }
-  });
-  const [leaves, setLeaves] = useState(() => safeLoad(LS_LEAVES) ?? []); // array of { id, from, to, reason, manager }
+  const [theme, setTheme] = useState(() => safeLoad(LS_THEME) ?? "light");
+  const [leaves, setLeaves] = useState(() => safeLoad(LS_LEAVES) ?? []);
   const [activityLog, setActivityLog] = useState(
     () => safeLoad(LS_ACTIVITY) ?? []
+  );
+  const [oncall, setOncall] = useState(() => safeLoad(LS_ONCALL) ?? []);
+  const [notifs, setNotifs] = useState(() => safeLoad(LS_NOTIFS) ?? []);
+  const [globalView, setGlobalView] = useState(
+    () => safeLoad(LS_VIEW) ?? "dashboard"
   );
 
   // ---------- UI state ----------
@@ -140,9 +163,12 @@ export default function UserDashboard() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [page, setPage] = useState(1);
   const perPage = 12;
-  const [shortView, setShortView] = useState(false);
 
-  // form state for creating/updating ticket
+  // block modal state
+  const [blockModalOpen, setBlockModalOpen] = useState(false);
+  const [selectedBlock, setSelectedBlock] = useState(null);
+
+  // create form (note: block will be auto-assigned)
   const [form, setForm] = useState({
     category: "",
     service: "",
@@ -151,15 +177,19 @@ export default function UserDashboard() {
     priority: "Low",
     issue: "",
     files: [],
+    closingDays: 1,
   });
 
-  // watch and persist changes
+  // persist on change
   useEffect(() => safeSave(LS_TICKETS, tickets), [tickets]);
   useEffect(() => safeSave(LS_THEME, theme), [theme]);
   useEffect(() => safeSave(LS_LEAVES, leaves), [leaves]);
   useEffect(() => safeSave(LS_ACTIVITY, activityLog), [activityLog]);
+  useEffect(() => safeSave(LS_ONCALL, oncall), [oncall]);
+  useEffect(() => safeSave(LS_NOTIFS, notifs), [notifs]);
+  useEffect(() => safeSave(LS_VIEW, globalView), [globalView]);
 
-  // apply theme class to root (Tailwind class strategy)
+  // apply theme class to root
   useEffect(() => {
     if (typeof document === "undefined") return;
     if (theme === "dark") document.documentElement.classList.add("dark");
@@ -176,9 +206,9 @@ export default function UserDashboard() {
     return () => document.removeEventListener("mousedown", onDoc);
   }, []);
 
-  // small helpers
+  // small helpers & derived data
   const columns = ["Open", "In Progress", "Resolved"];
-  const myTickets = useMemo(() => tickets.slice(), [tickets]); // all tickets belong to current user in this simplified app
+  const myTickets = useMemo(() => tickets.slice(), [tickets]);
 
   const kanban = useMemo(() => {
     const map = { Open: [], "In Progress": [], Resolved: [] };
@@ -191,7 +221,6 @@ export default function UserDashboard() {
     [kanban]
   );
 
-  // filtering / paging for table
   const filtered = useMemo(() => {
     const q = (searchQ || "").trim().toLowerCase();
     let arr = myTickets.slice();
@@ -208,7 +237,7 @@ export default function UserDashboard() {
       );
     if (q)
       arr = arr.filter((t) =>
-        [t.id, t.service, t.asset, t.issue].some((v) =>
+        [t.id, t.service, t.asset, t.issue, t.block].some((v) =>
           (v || "").toLowerCase().includes(q)
         )
       );
@@ -222,7 +251,6 @@ export default function UserDashboard() {
   }, [page, pageCount]);
   const pageItems = filtered.slice((page - 1) * perPage, page * perPage);
 
-  // formatting helpers
   const format = (d) => (d ? dayjs(d).format("DD/MM/YYYY HH:mm") : "-");
   const totalTime = (t) => {
     const start = dayjs(t.createdOn);
@@ -231,21 +259,35 @@ export default function UserDashboard() {
     return `${Math.floor(diff / 60)}h ${diff % 60}m`;
   };
 
-  // actions that also log activity
   const logActivity = (message) => {
     const entry = `${dayjs().format("YYYY-MM-DD HH:mm")} — ${message}`;
-    setActivityLog((p) => [entry, ...p].slice(0, 200));
+    setActivityLog((p) => [entry, ...p].slice(0, 500));
   };
 
+  // super algorithm: simple weighted score
+  const computeActivityScore = () => {
+    const resolved = tickets.filter((t) => t.status === "Resolved").length;
+    const total = tickets.length || 1;
+    const recency = Math.min(20, activityLog.length) * 2;
+    const score = Math.round((resolved / total) * 80 + (recency / 20) * 20);
+    return Math.max(0, Math.min(100, score));
+  };
+
+  // create ticket (auto-assign block)
   const createTicket = (payload) => {
+    const dept = payload.department || currentUser.department;
+    const assignedBlock = DEPARTMENT_BLOCK_MAP[dept] || "Block 1";
     const ticket = {
       id: `IT${Date.now().toString().slice(-6)}`,
       ...payload,
+      block: assignedBlock,
       createdOn: new Date().toISOString(),
       status: "Open",
     };
     setTickets((p) => [ticket, ...p]);
-    logActivity(`Created ticket ${ticket.id} (${ticket.service})`);
+    logActivity(
+      `Created ticket ${ticket.id} (${ticket.service}) in ${ticket.block}`
+    );
   };
 
   const resolveTicket = (id) => {
@@ -264,31 +306,37 @@ export default function UserDashboard() {
     logActivity(`Updated ticket ${id}`);
   };
 
-  // Leave management (multiple future leaves)
+  // leaves
   const addLeave = ({ from, to, reason, manager }) => {
-    // validation: ensure 'from' <= 'to' and dates in future or today
     const fromDate = dayjs(from);
     const toDate = dayjs(to);
     if (!fromDate.isValid() || !toDate.isValid() || toDate.isBefore(fromDate)) {
-      alert(
-        "Please provide a valid date range (to must be same or after from)."
-      );
+      alert("Please provide a valid date range.");
       return;
     }
     const newLeave = {
       id: `L${Date.now().toString().slice(-6)}`,
       from: fromDate.toISOString(),
       to: toDate.toISOString(),
-      reason: reason || "No reason provided",
+      reason: reason || "No reason",
       manager: manager || "Not provided",
       createdOn: new Date().toISOString(),
+      completed: false,
     };
     setLeaves((p) => [newLeave, ...p]);
-    logActivity(
-      `Planned leave (${dayjs(newLeave.from).format("DD/MM")} → ${dayjs(
+    const notif = {
+      id: `N${Date.now().toString().slice(-6)}`,
+      to: manager || "Manager",
+      message: `${currentUser.name} (${
+        currentUser.userId
+      }) planned leave ${dayjs(newLeave.from).format("DD/MM")} → ${dayjs(
         newLeave.to
-      ).format("DD/MM")})`
-    );
+      ).format("DD/MM")}. Reason: ${newLeave.reason}`,
+      createdOn: new Date().toISOString(),
+      read: false,
+    };
+    setNotifs((p) => [notif, ...p]);
+    logActivity(`Planned leave ${newLeave.id} — notified ${notif.to}`);
   };
 
   const removeLeave = (id) => {
@@ -296,7 +344,56 @@ export default function UserDashboard() {
     logActivity(`Removed planned leave ${id}`);
   };
 
-  // CSV export for the user's tickets
+  const markBackFromLeave = (id) => {
+    const leave = leaves.find((l) => l.id === id);
+    if (!leave) return;
+    setLeaves((p) =>
+      p.map((l) => (l.id === id ? { ...l, completed: true } : l))
+    );
+    const start = dayjs(leave.from);
+    const end = dayjs(leave.to).endOf("day");
+    setTickets((p) =>
+      p.map((t) =>
+        t.resolvedOn &&
+        dayjs(t.resolvedOn).isAfter(start) &&
+        dayjs(t.resolvedOn).isBefore(end)
+          ? { ...t, status: "In Progress" }
+          : t
+      )
+    );
+    const notif = {
+      id: `N${Date.now().toString().slice(-6)}`,
+      to: leave.manager || "Manager",
+      message: `${currentUser.name} is back from leave (${dayjs(
+        leave.from
+      ).format("DD/MM")} → ${dayjs(leave.to).format("DD/MM")}).`,
+      createdOn: new Date().toISOString(),
+      read: false,
+    };
+    setNotifs((p) => [notif, ...p]);
+    logActivity(`Marked back from leave ${id} — reopened related tickets`);
+  };
+
+  // on-call
+  const addOncallActivity = ({ ticketId, note, attachments }) => {
+    const id = `OC${Date.now().toString().slice(-6)}`;
+    const entry = {
+      id,
+      ticketId,
+      note,
+      attachments: attachments || [],
+      qr: generateQRDataUrl(ticketId || id),
+      createdOn: new Date().toISOString(),
+    };
+    setOncall((p) => [entry, ...p]);
+    logActivity(`On-call recorded for ${ticketId || id}`);
+  };
+
+  // manager notif
+  const markNotifRead = (id) =>
+    setNotifs((p) => p.map((n) => (n.id === id ? { ...n, read: true } : n)));
+
+  // export CSV
   const exportMyTicketsCSV = () => {
     if (!tickets.length) {
       alert("No tickets to export.");
@@ -307,6 +404,7 @@ export default function UserDashboard() {
       service: t.service,
       status: t.status,
       department: t.department,
+      block: t.block || "",
       createdOn: t.createdOn,
       resolvedOn: t.resolvedOn || "",
     }));
@@ -328,33 +426,27 @@ export default function UserDashboard() {
     URL.revokeObjectURL(url);
   };
 
-  // small UI helpers
+  // block stats for chart
+  const blockStatsData = useMemo(() => {
+    const map = {};
+    tickets.forEach((t) => {
+      const b = t.block || "Unassigned";
+      if (!map[b]) map[b] = { block: b, open: 0, resolved: 0, total: 0 };
+      map[b].total += 1;
+      if (t.status === "Resolved") map[b].resolved += 1;
+      else map[b].open += 1;
+    });
+    // convert to array sorted by total desc
+    return Object.values(map).sort((a, b) => b.total - a.total);
+  }, [tickets]);
+
+  // departments list
   const departments = Array.from(
     new Set(tickets.map((t) => t.department).filter(Boolean))
   );
   if (!departments.length) departments.push(currentUser.department);
 
-  // ---------- Create / form submit ----------
-  const handleCreateSubmit = (e) => {
-    e.preventDefault();
-    createTicket({
-      ...form,
-      department: form.department || currentUser.department,
-    });
-    setCreateOpen(false);
-    // reset form
-    setForm({
-      category: "",
-      service: "",
-      department: currentUser.department,
-      asset: "",
-      priority: "Low",
-      issue: "",
-      files: [],
-    });
-  };
-
-  // drag/drop helpers
+  // drag/drop handlers
   const onCardDragStart = (e, id) => e.dataTransfer.setData("ticketId", id);
   const onColumnDragOver = (e) => e.preventDefault();
   const onColumnDrop = (e, status) => {
@@ -363,10 +455,20 @@ export default function UserDashboard() {
     updateTicket(id, { status });
   };
 
-  /* ===========================
-     Part 2 — Render / UI
-     =========================== */
+  // open block modal
+  const openBlockModal = (blockName) => {
+    setSelectedBlock(blockName);
+    setBlockModalOpen(true);
+  };
 
+  // resolve from modal
+  const resolveTicketFromModal = (id) => {
+    resolveTicket(id);
+  };
+
+  /* ===========================
+     Render / UI
+     =========================== */
   return (
     <div
       className={`relative min-h-screen ${
@@ -399,7 +501,7 @@ export default function UserDashboard() {
             <ClipboardList size={22} /> My Dashboard
           </h1>
           <p className="text-sm opacity-80 mt-1">
-            Viewing your tickets & activity
+            Viewing your tickets & activity • Score: {computeActivityScore()}%
           </p>
         </div>
 
@@ -516,7 +618,7 @@ export default function UserDashboard() {
                             </div>
                             <div className="text-sm font-bold">#{t.id}</div>
                             <div className="text-xs opacity-70">
-                              {t.department} • {t.service}
+                              {t.department} • {t.service} • {t.block}
                             </div>
                           </div>
                           <div className="flex flex-col items-end gap-2">
@@ -540,6 +642,7 @@ export default function UserDashboard() {
                               className="mt-3 bg-slate-900/90 p-2 rounded-md border border-cyan-500/10"
                             >
                               <div className="flex items-center gap-2">
+                                {/* VIEW BUTTON */}
                                 <button
                                   onClick={() => {
                                     setDetailView(t.id);
@@ -549,26 +652,40 @@ export default function UserDashboard() {
                                 >
                                   View
                                 </button>
+
+                                {/* RESOLVE BUTTON */}
                                 <button
-                                  onClick={() => {
-                                    resolveTicket(t.id);
+                                  onClick={async () => {
+                                    try {
+                                      await resolveTicket(t.id);
+                                    } catch (error) {
+                                      console.error("Resolve error:", error);
+                                    }
                                     setOpenMenuFor(null);
                                   }}
                                   className="text-xs px-2 py-1 rounded-md bg-green-600"
                                 >
                                   Resolve
                                 </button>
+
+                                {/* START BUTTON */}
                                 <button
-                                  onClick={() => {
-                                    updateTicket(t.id, {
-                                      status: "In Progress",
-                                    });
+                                  onClick={async () => {
+                                    try {
+                                      await updateTicket(t.id, {
+                                        status: "In Progress",
+                                      });
+                                    } catch (error) {
+                                      console.error("Update error:", error);
+                                    }
                                     setOpenMenuFor(null);
                                   }}
                                   className="text-xs px-2 py-1 rounded-md bg-yellow-600"
                                 >
                                   Start
                                 </button>
+
+                                {/* CLOSE MENU */}
                                 <button
                                   onClick={() => setOpenMenuFor(null)}
                                   className="text-xs px-2 py-1 rounded-md"
@@ -601,6 +718,7 @@ export default function UserDashboard() {
                       <th className="px-4 py-3 text-left">Service</th>
                       <th className="px-4 py-3 text-left">Priority</th>
                       <th className="px-4 py-3 text-left">Status</th>
+                      <th className="px-4 py-3 text-left">Block</th>
                       <th className="px-4 py-3 text-left">Created On</th>
                       <th className="px-4 py-3 text-right">Action</th>
                     </tr>
@@ -632,6 +750,7 @@ export default function UserDashboard() {
                             {t.status}
                           </span>
                         </td>
+                        <td className="px-4 py-3">{t.block}</td>
                         <td className="px-4 py-3">{format(t.createdOn)}</td>
                         <td className="px-4 py-3 text-right relative">
                           <button
@@ -816,7 +935,7 @@ export default function UserDashboard() {
             </div>
           </div>
 
-          {/* avg resolution time */}
+          {/* avg resolution */}
           <div className="text-xs mb-3">
             <div className="font-medium">Avg Resolution Time</div>
             <div className="opacity-80 text-sm">
@@ -844,11 +963,64 @@ export default function UserDashboard() {
             </button>
           </div>
 
-          {/* Leaves panel */}
+          {/* Block performance chart */}
+          <div className="mb-3">
+            <div className="flex items-center justify-between mb-2">
+              <div className="font-medium">Block Performance</div>
+              <div className="text-xs opacity-70">Open vs Resolved</div>
+            </div>
+
+            <div className="h-40">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={blockStatsData}>
+                  <XAxis dataKey="block" tick={{ fontSize: 12 }} />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="open" name="Open" fill={COLORS.OpenBar} />
+                  <Bar
+                    dataKey="resolved"
+                    name="Resolved"
+                    fill={COLORS.ResolvedBar}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* block summary + view details */}
+            <div className="text-xs opacity-80 mt-3">
+              {blockStatsData.length ? (
+                blockStatsData.map((b) => (
+                  <div
+                    key={b.block}
+                    className="flex items-center justify-between mb-1"
+                  >
+                    <div>
+                      {b.block} — {b.total} tickets
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-xs opacity-70">
+                        {b.resolved} resolved
+                      </div>
+                      <button
+                        onClick={() => openBlockModal(b.block)}
+                        className="px-2 py-1 rounded-md bg-slate-900/40 text-xs"
+                      >
+                        View Detailed Tickets
+                      </button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="opacity-60">No block data</div>
+              )}
+            </div>
+          </div>
+
+          {/* leaves */}
           <div className="mt-2">
             <h5 className="text-sm font-medium mb-2">Planned Leaves</h5>
 
-            {/* add leave mini-form */}
             <AddLeaveForm onAdd={(vals) => addLeave(vals)} />
 
             <div className="max-h-36 overflow-y-auto mt-3 text-xs">
@@ -872,12 +1044,22 @@ export default function UserDashboard() {
                       <div className="text-[11px] opacity-70">
                         {dayjs(l.createdOn).format("DD/MM HH:mm")}
                       </div>
-                      <button
-                        onClick={() => removeLeave(l.id)}
-                        className="px-2 py-1 rounded-md bg-red-600 text-[12px]"
-                      >
-                        Remove
-                      </button>
+                      <div className="flex flex-col gap-1">
+                        <button
+                          onClick={() => removeLeave(l.id)}
+                          className="px-2 py-1 rounded-md bg-red-600 text-[12px]"
+                        >
+                          Remove
+                        </button>
+                        {!l.completed && (
+                          <button
+                            onClick={() => markBackFromLeave(l.id)}
+                            className="px-2 py-1 rounded-md bg-green-600 text-[12px]"
+                          >
+                            Mark Back (Manual Open)
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))
@@ -956,6 +1138,9 @@ export default function UserDashboard() {
                           <b>Resolved On:</b> {format(t.resolvedOn)}
                         </div>
                       )}
+                      <div>
+                        <b>Block:</b> {t.block}
+                      </div>
                     </div>
 
                     <div className="mt-4">
@@ -987,6 +1172,106 @@ export default function UserDashboard() {
                   </div>
                 );
               })()}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Block detail modal */}
+      <AnimatePresence>
+        {blockModalOpen && selectedBlock && (
+          <motion.div
+            className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="bg-white text-slate-900 p-6 rounded-2xl w-full max-w-4xl border shadow-2xl"
+              initial={{ scale: 0.98 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.98 }}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">
+                  Tickets in {selectedBlock}
+                </h2>
+                <button
+                  onClick={() => {
+                    setBlockModalOpen(false);
+                    setSelectedBlock(null);
+                  }}
+                  className="px-2 py-1 rounded-md bg-slate-200"
+                >
+                  <X />
+                </button>
+              </div>
+
+              <div className="max-h-[60vh] overflow-y-auto">
+                <table className="min-w-full text-sm">
+                  <thead className="text-xs uppercase bg-slate-100">
+                    <tr>
+                      <th className="px-4 py-2 text-left">ID</th>
+                      <th className="px-4 py-2 text-left">Service</th>
+                      <th className="px-4 py-2 text-left">Priority</th>
+                      <th className="px-4 py-2 text-left">Status</th>
+                      <th className="px-4 py-2 text-left">Created</th>
+                      <th className="px-4 py-2 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tickets
+                      .filter(
+                        (t) => (t.block || "Unassigned") === selectedBlock
+                      )
+                      .map((t) => (
+                        <tr key={t.id} className="border-b hover:bg-slate-50">
+                          <td className="px-4 py-2">{t.id}</td>
+                          <td className="px-4 py-2">{t.service}</td>
+                          <td className="px-4 py-2">{t.priority}</td>
+                          <td className="px-4 py-2">{t.status}</td>
+                          <td className="px-4 py-2">{format(t.createdOn)}</td>
+                          <td className="px-4 py-2 text-right">
+                            {t.status !== "Resolved" ? (
+                              <button
+                                onClick={() => resolveTicketFromModal(t.id)}
+                                className="px-3 py-1 rounded-md bg-green-600 text-white"
+                              >
+                                Resolve
+                              </button>
+                            ) : (
+                              <div className="text-xs opacity-70">Resolved</div>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    {tickets.filter(
+                      (t) => (t.block || "Unassigned") === selectedBlock
+                    ).length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={6}
+                          className="px-4 py-4 text-center opacity-70"
+                        >
+                          No tickets in this block
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="mt-4 flex justify-end">
+                <button
+                  onClick={() => {
+                    setBlockModalOpen(false);
+                    setSelectedBlock(null);
+                  }}
+                  className="px-4 py-2 rounded-md bg-slate-200"
+                >
+                  Close
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}
@@ -1025,7 +1310,26 @@ export default function UserDashboard() {
               </div>
 
               <form
-                onSubmit={handleCreateSubmit}
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  // auto-assign block from department
+                  const dept = form.department || currentUser.department;
+                  const assignedBlock =
+                    DEPARTMENT_BLOCK_MAP[dept] || "Unassigned";
+                  createTicket({
+                    ...form,
+                    department: dept,
+                    block: assignedBlock,
+                  });
+                  setCreateOpen(false);
+                  setForm({
+                    asset: "",
+                    priority: "Low",
+                    issue: "",
+                    files: [],
+                    closingDays: 1,
+                  });
+                }}
                 className="grid grid-cols-1 md:grid-cols-2 gap-4"
               >
                 <div className="space-y-3">
@@ -1097,6 +1401,7 @@ export default function UserDashboard() {
                     <option value="Facilities">Facilities</option>
                     <option value="HR">HR</option>
                     <option value="Finance">Finance</option>
+                    <option value="Security">Security</option>
                   </select>
 
                   <label className="block text-sm">Asset *</label>
@@ -1143,6 +1448,10 @@ export default function UserDashboard() {
                   </div>
 
                   <div className="text-xs opacity-70">
+                    Block will be auto-assigned based on department after
+                    creation.
+                  </div>
+                  <div className="text-xs opacity-70">
                     Ticket will be assigned to you:{" "}
                     <b>
                       {currentUser.userId} - {currentUser.name}
@@ -1175,8 +1484,21 @@ export default function UserDashboard() {
 }
 
 /* ===========================
+   Helper: simple QR data url
+   (used previously for oncall)
+   =========================== */
+function generateQRDataUrl(text = "") {
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'><rect width='100%' height='100%' fill='white'/><g fill='black' font-size='8' font-family='monospace'>${text
+    .split("")
+    .map((c, i) => `<text x='4' y='${10 + (i % 12) * 9}'>${c}</text>`)
+    .join("")}</g></svg>`;
+  return `data:image/svg+xml;base64,${
+    typeof window !== "undefined" ? btoa(svg) : ""
+  }`;
+}
+
+/* ===========================
    Helper sub-component: AddLeaveForm
-   (keeps main file tidy)
    =========================== */
 function AddLeaveForm({ onAdd }) {
   const [from, setFrom] = useState("");
